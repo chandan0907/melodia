@@ -1,4 +1,4 @@
-// Unified Audio Engine: Web Audio API Synthesizer & YouTube Iframe Player + PeerJS Sync
+// Unified Audio Engine: YouTube Streaming Player + Web Audio Ambient Synth + PeerJS Sync
 import { RECORDS, PLAYLISTS } from './data.js';
 
 class AudioEngine {
@@ -8,24 +8,27 @@ class AudioEngine {
     this.synthGain = null;
     this.synthTimer = null;
     this.isPlaying = false;
-    this.volume = 0.8;
-    this.mode = 'synth'; // 'synth' | 'youtube'
+    this.volume = 0.85;
+    this.mode = 'youtube'; // 'youtube' | 'synth'
     
-    // Current track info
+    // Default current track: Awarapan 2 - Toh Phir Aao
     this.currentTrack = {
-      title: 'The Ghost Sessions',
-      artist: 'Kai Sterling & Sarah Preston',
-      album: 'love',
-      cover: './assets/images/album_love.jpg',
-      duration: '4:15',
-      durationSeconds: 255,
+      title: 'Toh Phir Aao',
+      artist: 'Mustafa Zahid & Pritam',
+      album: 'Awarapan 2',
+      cover: './assets/images/album_awarapan.jpg',
+      duration: '5:48',
+      durationSeconds: 348,
       currentTimeSeconds: 0,
-      ytId: 'lp-EO5I60KA'
+      ytId: 'n_VrRuNkbrE',
+      recordId: 'awarapan-2',
+      trackIdx: 0
     };
 
     // YouTube state
     this.ytPlayer = null;
     this.ytReady = false;
+    this.queued = null; // { ytId, startSeconds }
     this.queue = [];
     this.queueIndex = 0;
     
@@ -78,147 +81,101 @@ class AudioEngine {
     };
   }
 
-  /* ------------------------------------------------ Web Audio Synthesizer */
-  ensureAudioContext() {
-    if (!this.audioCtx) {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      this.audioCtx = new AudioContext();
-      this.analyser = this.audioCtx.createAnalyser();
-      this.analyser.fftSize = 128;
-      this.analyser.smoothingTimeConstant = 0.85;
-
-      this.synthGain = this.audioCtx.createGain();
-      this.synthGain.gain.setValueAtTime(this.volume, this.audioCtx.currentTime);
-
-      this.synthGain.connect(this.analyser);
-      this.analyser.connect(this.audioCtx.destination);
-    }
-
-    if (this.audioCtx.state === 'suspended') {
-      this.audioCtx.resume();
-    }
-  }
-
-  startSynthSequence() {
-    this.ensureAudioContext();
-    if (this.synthTimer) clearInterval(this.synthTimer);
-
-    // Ambient chord progression: Cm9 -> Abmaj7 -> Fm9 -> G7b9
-    const chords = [
-      [130.81, 155.56, 196.00, 233.08, 293.66], // C3, Eb3, G3, Bb3, D4
-      [103.83, 130.81, 155.56, 207.65, 261.63], // Ab2, C3, Eb3, Ab3, C4
-      [87.31, 130.81, 155.56, 174.61, 220.00],  // F2, C3, Eb3, F3, A3
-      [98.00, 123.47, 146.83, 196.00, 246.94]   // G2, B2, D3, G3, B3
-    ];
-    let step = 0;
-
-    const playChordStep = () => {
-      if (!this.isPlaying || this.mode !== 'synth') return;
-      const chord = chords[step % chords.length];
-      const now = this.audioCtx.currentTime;
-
-      // Play soft warm chord notes
-      chord.forEach((freq, idx) => {
-        const osc = this.audioCtx.createOscillator();
-        const noteGain = this.audioCtx.createGain();
-        const filter = this.audioCtx.createBiquadFilter();
-
-        osc.type = idx === 0 ? 'sine' : 'triangle';
-        osc.frequency.setValueAtTime(freq, now);
-
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(500 + Math.sin(now * 0.5) * 200, now);
-        filter.Q.value = 2.0;
-
-        // Envelope
-        const attack = 0.4 + idx * 0.05;
-        const decay = 2.4;
-        noteGain.gain.setValueAtTime(0.0001, now);
-        noteGain.gain.exponentialRampToValueAtTime(0.08 / (idx + 1), now + attack);
-        noteGain.gain.exponentialRampToValueAtTime(0.0001, now + attack + decay);
-
-        osc.connect(filter);
-        filter.connect(noteGain);
-        noteGain.connect(this.synthGain);
-
-        osc.start(now);
-        osc.stop(now + attack + decay + 0.1);
-      });
-
-      // Sub-bass hit
-      const sub = this.audioCtx.createOscillator();
-      const subGain = this.audioCtx.createGain();
-      sub.type = 'sine';
-      sub.frequency.setValueAtTime(chord[0] / 2, now);
-      subGain.gain.setValueAtTime(0.18, now);
-      subGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
-      sub.connect(subGain);
-      subGain.connect(this.synthGain);
-      sub.start(now);
-      sub.stop(now + 1.9);
-
-      step++;
-    };
-
-    playChordStep();
-    this.synthTimer = setInterval(playChordStep, 2400);
-  }
-
-  stopSynthSequence() {
-    if (this.synthTimer) {
-      clearInterval(this.synthTimer);
-      this.synthTimer = null;
-    }
-  }
-
   /* ------------------------------------------------ YouTube Player */
   initYouTube() {
     if (window.YT && window.YT.Player) {
       this.setupYTPlayer();
     } else {
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      document.head.appendChild(tag);
-      window.onYouTubeIframeAPIReady = () => this.setupYTPlayer();
+      const existingScript = document.querySelector('script[src*="youtube.com/iframe_api"]');
+      if (!existingScript) {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(tag);
+      }
+      const prevCallback = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        if (typeof prevCallback === 'function') prevCallback();
+        this.setupYTPlayer();
+      };
     }
   }
 
   setupYTPlayer() {
     const container = document.getElementById('yt-host');
-    if (!container) return;
+    if (!container || this.ytPlayer) return;
 
-    this.ytPlayer = new window.YT.Player('yt-host', {
-      width: '100%',
-      height: '100%',
-      playerVars: {
-        controls: 0,
-        disablekb: 1,
-        fs: 0,
-        modestbranding: 1,
-        rel: 0,
-        iv_load_policy: 3,
-        playsinline: 1,
-        cc_load_policy: 0,
-        origin: window.location.origin
-      },
-      events: {
-        onReady: () => {
-          this.ytReady = true;
-          this.ytPlayer.setVolume(this.volume * 100);
+    try {
+      this.ytPlayer = new window.YT.Player('yt-host', {
+        width: '100%',
+        height: '100%',
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          disablekb: 1,
+          fs: 0,
+          modestbranding: 1,
+          rel: 0,
+          iv_load_policy: 3,
+          playsinline: 1,
+          cc_load_policy: 0
         },
-        onStateChange: (e) => {
-          if (e.data === window.YT.PlayerState.PLAYING) {
-            this.isPlaying = true;
-            this.notify();
-          } else if (e.data === window.YT.PlayerState.PAUSED) {
-            this.isPlaying = false;
-            this.notify();
-          } else if (e.data === window.YT.PlayerState.ENDED) {
-            this.handleEnded();
+        events: {
+          onReady: () => {
+            this.ytReady = true;
+            this.ytPlayer.setVolume(this.volume * 100);
+            if (this.queued) {
+              const q = this.queued;
+              this.queued = null;
+              this.playYouTubeVideo(q.ytId, q.startSeconds || 0);
+            }
+          },
+          onStateChange: (e) => {
+            if (e.data === window.YT.PlayerState.PLAYING) {
+              this.isPlaying = true;
+              this.stopSynthSequence();
+              this.notify();
+            } else if (e.data === window.YT.PlayerState.PAUSED) {
+              this.isPlaying = false;
+              this.notify();
+            } else if (e.data === window.YT.PlayerState.ENDED) {
+              this.handleEnded();
+            }
+          },
+          onError: (err) => {
+            console.warn('YouTube playback notice:', err);
+            // Move to next track or ambient fallback
+            setTimeout(() => this.next(), 500);
           }
         }
+      });
+    } catch (e) {
+      console.warn('Error instantiating YouTube player:', e);
+    }
+  }
+
+  playYouTubeVideo(ytId, startSeconds = 0) {
+    this.mode = 'youtube';
+    this.isPlaying = true;
+    this.stopSynthSequence();
+
+    if (this.ytReady && this.ytPlayer && typeof this.ytPlayer.loadVideoById === 'function') {
+      try {
+        this.ytPlayer.loadVideoById({
+          videoId: ytId,
+          startSeconds: Math.max(0, startSeconds || 0)
+        });
+        this.ytPlayer.playVideo();
+      } catch (e) {
+        console.warn('Error loading YouTube video:', e);
       }
-    });
+    } else {
+      this.queued = { ytId, startSeconds };
+      // Play ambient sound while buffering/connecting
+      this.startSynthSequence();
+    }
+
+    this.notify();
+    this.broadcastSync();
   }
 
   /* ------------------------------------------------ Playback Controls */
@@ -239,11 +196,14 @@ class AudioEngine {
       trackIdx: trackIdx
     };
 
-    this.mode = 'synth'; // Default to instant high-res procedural synth
-    this.isPlaying = true;
-    this.startSynthSequence();
-    this.notify();
-    this.broadcastSync();
+    if (track.ytId) {
+      this.playYouTubeVideo(track.ytId, 0);
+    } else {
+      this.mode = 'synth';
+      this.isPlaying = true;
+      this.startSynthSequence();
+      this.notify();
+    }
   }
 
   playPlaylist(playlistId) {
@@ -256,71 +216,32 @@ class AudioEngine {
       title: pl.name,
       artist: 'Melodia Studio Session',
       album: pl.name,
-      cover: './assets/images/album_love.jpg',
-      duration: '3:30',
-      durationSeconds: 210,
+      cover: pl.id.includes('awarapan') ? './assets/images/album_awarapan.jpg' : './assets/images/album_love.jpg',
+      duration: '4:30',
+      durationSeconds: 270,
       currentTimeSeconds: 0,
       ytId: firstId,
       playlistId: pl.id
     };
 
-    this.mode = 'youtube';
-    this.isPlaying = true;
-
-    if (this.ytReady && this.ytPlayer) {
-      this.ytPlayer.loadVideoById(firstId);
-      this.ytPlayer.playVideo();
-    } else {
-      this.mode = 'synth';
-      this.startSynthSequence();
-    }
-
-    this.notify();
-    this.broadcastSync();
-  }
-
-  playYouTubeTrack(ytId, title, artist, cover) {
-    this.mode = 'youtube';
-    this.currentTrack = {
-      title: title || 'Studio Broadcast',
-      artist: artist || 'Melodia Records',
-      album: 'Live Session',
-      cover: cover || './assets/images/album_love.jpg',
-      duration: '3:45',
-      durationSeconds: 225,
-      currentTimeSeconds: 0,
-      ytId: ytId
-    };
-
-    this.isPlaying = true;
-    if (this.ytReady && this.ytPlayer) {
-      this.ytPlayer.loadVideoById(ytId);
-      this.ytPlayer.playVideo();
-    } else {
-      this.mode = 'synth';
-      this.startSynthSequence();
-    }
-
-    this.notify();
-    this.broadcastSync();
+    this.playYouTubeVideo(firstId, 0);
   }
 
   toggle() {
-    this.ensureAudioContext();
     this.isPlaying = !this.isPlaying;
 
     if (this.isPlaying) {
-      if (this.mode === 'synth') {
-        this.startSynthSequence();
-      } else if (this.ytPlayer && this.ytReady) {
+      if (this.mode === 'youtube' && this.ytPlayer && this.ytReady && typeof this.ytPlayer.playVideo === 'function') {
+        this.stopSynthSequence();
         this.ytPlayer.playVideo();
+      } else {
+        this.startSynthSequence();
       }
     } else {
-      if (this.mode === 'synth') {
-        this.stopSynthSequence();
-      } else if (this.ytPlayer && this.ytReady) {
+      if (this.ytPlayer && this.ytReady && typeof this.ytPlayer.pauseVideo === 'function') {
         this.ytPlayer.pauseVideo();
       }
+      this.stopSynthSequence();
     }
 
     this.notify();
@@ -328,31 +249,34 @@ class AudioEngine {
   }
 
   next() {
-    // If playing record
+    // If playing record with tracklist
     if (this.currentTrack.recordId) {
       const record = RECORDS.find((r) => r.id === this.currentTrack.recordId);
-      if (record) {
+      if (record && record.tracks.length > 0) {
         const nextIdx = (this.currentTrack.trackIdx + 1) % record.tracks.length;
         this.playRecord(record.id, nextIdx);
         return;
       }
     }
-    // Next in YouTube queue
+    // Next in playlist queue
     if (this.queue.length > 0) {
       this.queueIndex = (this.queueIndex + 1) % this.queue.length;
       const nextId = this.queue[this.queueIndex];
-      this.playYouTubeTrack(nextId, 'Track #' + (this.queueIndex + 1), 'Melodia Session', this.currentTrack.cover);
+      this.currentTrack.ytId = nextId;
+      this.currentTrack.title = `Track #${this.queueIndex + 1}`;
+      this.playYouTubeVideo(nextId, 0);
       return;
     }
     // Advance to next album
-    const nextRec = RECORDS[(RECORDS.findIndex((r) => r.id === this.currentTrack.album) + 1) % RECORDS.length] || RECORDS[0];
+    const currentIdx = RECORDS.findIndex((r) => r.id === this.currentTrack.recordId);
+    const nextRec = RECORDS[(currentIdx + 1) % RECORDS.length] || RECORDS[0];
     this.playRecord(nextRec.id, 0);
   }
 
   prev() {
     if (this.currentTrack.recordId) {
       const record = RECORDS.find((r) => r.id === this.currentTrack.recordId);
-      if (record) {
+      if (record && record.tracks.length > 0) {
         const prevIdx = (this.currentTrack.trackIdx - 1 + record.tracks.length) % record.tracks.length;
         this.playRecord(record.id, prevIdx);
         return;
@@ -366,11 +290,11 @@ class AudioEngine {
     if (this.synthGain && this.audioCtx) {
       this.synthGain.gain.setValueAtTime(this.volume, this.audioCtx.currentTime);
     }
-    if (this.ytPlayer && this.ytReady) {
+    if (this.ytPlayer && this.ytReady && typeof this.ytPlayer.setVolume === 'function') {
       this.ytPlayer.setVolume(this.volume * 100);
     }
     try {
-      localStorage.setItem('mel_volume', this.volume);
+      localStorage.setItem('mel_volume', this.volume.toString());
     } catch (e) {}
     this.notify();
   }
@@ -380,15 +304,20 @@ class AudioEngine {
   }
 
   startProgressTicker() {
+    if (this.progressInterval) clearInterval(this.progressInterval);
+
     this.progressInterval = setInterval(() => {
       if (!this.isPlaying) return;
 
-      if (this.mode === 'youtube' && this.ytPlayer && this.ytReady && this.ytPlayer.getCurrentTime) {
+      if (this.mode === 'youtube' && this.ytPlayer && this.ytReady && typeof this.ytPlayer.getCurrentTime === 'function') {
         try {
           const cur = this.ytPlayer.getCurrentTime() || 0;
           const dur = this.ytPlayer.getDuration() || this.currentTrack.durationSeconds;
-          this.currentTrack.currentTimeSeconds = cur;
-          this.currentTrack.durationSeconds = dur;
+          if (dur > 0) {
+            this.currentTrack.currentTimeSeconds = cur;
+            this.currentTrack.durationSeconds = dur;
+            this.currentTrack.duration = this.formatTime(dur);
+          }
         } catch (e) {}
       } else {
         this.currentTrack.currentTimeSeconds += 1;
@@ -400,22 +329,107 @@ class AudioEngine {
     }, 1000);
   }
 
+  /* ------------------------------------------------ Web Audio Synthesizer */
+  ensureAudioContext() {
+    if (!this.audioCtx) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      this.audioCtx = new AudioContext();
+      this.analyser = this.audioCtx.createAnalyser();
+      this.analyser.fftSize = 128;
+      this.analyser.smoothingTimeConstant = 0.85;
+
+      this.synthGain = this.audioCtx.createGain();
+      this.synthGain.gain.setValueAtTime(this.volume * 0.5, this.audioCtx.currentTime);
+
+      this.synthGain.connect(this.analyser);
+      this.analyser.connect(this.audioCtx.destination);
+    }
+
+    if (this.audioCtx.state === 'suspended') {
+      this.audioCtx.resume();
+    }
+  }
+
+  startSynthSequence() {
+    this.ensureAudioContext();
+    if (this.synthTimer) clearInterval(this.synthTimer);
+
+    // Warm chord progression (Dm -> Bb -> Gm -> A7)
+    const chords = [
+      [146.83, 174.61, 220.00, 261.63], // Dm7
+      [116.54, 146.83, 174.61, 233.08], // Bbmaj7
+      [98.00, 116.54, 146.83, 196.00],  // Gm7
+      [110.00, 138.59, 164.81, 220.00]  // A7
+    ];
+    let step = 0;
+
+    const playChordStep = () => {
+      if (!this.isPlaying) return;
+      const chord = chords[step % chords.length];
+      const now = this.audioCtx.currentTime;
+
+      chord.forEach((freq, idx) => {
+        const osc = this.audioCtx.createOscillator();
+        const noteGain = this.audioCtx.createGain();
+        const filter = this.audioCtx.createBiquadFilter();
+
+        osc.type = idx === 0 ? 'sine' : 'triangle';
+        osc.frequency.setValueAtTime(freq, now);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(450 + Math.sin(now * 0.4) * 150, now);
+        filter.Q.value = 1.5;
+
+        const attack = 0.35 + idx * 0.05;
+        const decay = 2.2;
+        noteGain.gain.setValueAtTime(0.0001, now);
+        noteGain.gain.exponentialRampToValueAtTime(0.06 / (idx + 1), now + attack);
+        noteGain.gain.exponentialRampToValueAtTime(0.0001, now + attack + decay);
+
+        osc.connect(filter);
+        filter.connect(noteGain);
+        noteGain.connect(this.synthGain);
+
+        osc.start(now);
+        osc.stop(now + attack + decay + 0.1);
+      });
+
+      step++;
+    };
+
+    playChordStep();
+    this.synthTimer = setInterval(playChordStep, 2400);
+  }
+
+  stopSynthSequence() {
+    if (this.synthTimer) {
+      clearInterval(this.synthTimer);
+      this.synthTimer = null;
+    }
+  }
+
   getFrequencyData(array) {
-    if (this.analyser) {
+    if (this.analyser && this.mode === 'synth') {
       this.analyser.getByteFrequencyData(array);
     } else {
-      // Procedural synthetic energy if analyser not ready
+      // Procedural animated energy during YouTube streaming
+      const time = Date.now() * 0.004;
       for (let i = 0; i < array.length; i++) {
-        array[i] = this.isPlaying ? Math.floor(Math.random() * 80 + 30) : 5;
+        if (this.isPlaying) {
+          const wave = Math.sin(time + i * 0.3) * 0.5 + Math.sin(time * 1.8 + i * 0.15) * 0.3 + 0.5;
+          array[i] = Math.floor(wave * 140 + 40);
+        } else {
+          array[i] = 6;
+        }
       }
     }
   }
 
   parseDuration(str) {
-    if (!str) return 180;
+    if (!str) return 210;
     const parts = str.split(':').map(Number);
     if (parts.length === 2) return parts[0] * 60 + parts[1];
-    return 180;
+    return 210;
   }
 
   formatTime(seconds) {

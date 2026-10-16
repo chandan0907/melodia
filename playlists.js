@@ -13,7 +13,7 @@ window.MELODIA = {
       spotifyUrl: 'https://open.spotify.com/playlist/0qRsizDqcvjuBkpbLZkL69?si=596dc0215bb648f1',
       spotifyEmbedUrl: 'https://open.spotify.com/embed/playlist/0qRsizDqcvjuBkpbLZkL69?utm_source=generator&theme=0',
       tracks: [
-        'n_VrRuNkbrE', 'Tn37jjI-dlI', 'FJzE1p3mvw8', 'kF5oZgK5p8s', '6LYfwNkkrplbxbheWtkBL2'
+        'n_VrRuNkbrE', '6rvUyBiBtik', 'FJzE1p3mvw8', 'kF5oZgK5p8s', '6LYfwNkkrplbxbheWtkBL2'
       ]
     },
     {

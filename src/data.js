@@ -48,7 +48,7 @@ export const RECORDS = [
     description: 'The iconic emotional rock anthems featuring Toh Phir Aao, Tera Mera Rishta Purana, Mahiya, and Mera Piya Ghar Aaya.',
     tracks: [
       { id: 'aw-1', title: 'Toh Phir Aao', duration: '5:48', ytId: 'n_VrRuNkbrE', tempo: 80, key: 'Dm', singer: 'Mustafa Zahid' },
-      { id: 'aw-2', title: 'Tera Mera Rishta Purana', duration: '4:58', ytId: 'Tn37jjI-dlI', tempo: 78, key: 'Gm', singer: 'Mustafa Zahid' },
+      { id: 'aw-2', title: 'Tera Mera Rishta Purana', duration: '4:58', ytId: '6rvUyBiBtik', tempo: 78, key: 'Gm', singer: 'Mustafa Zahid' },
       { id: 'aw-3', title: 'Mahiya', duration: '4:42', ytId: 'FJzE1p3mvw8', tempo: 120, key: 'Fm', singer: 'Suzanne D\'Mello' },
       { id: 'aw-4', title: 'Toh Phir Aao (Lounge Version)', duration: '5:22', ytId: 'kF5oZgK5p8s', tempo: 76, key: 'Dm', singer: 'Mustafa Zahid' },
       { id: 'aw-5', title: 'Ve Mera Piya Ghar Aaya', duration: '4:15', ytId: '6LYfwNkkrplbxbheWtkBL2', tempo: 85, key: 'Am', singer: 'Faridkot' }
@@ -183,7 +183,7 @@ export const PLAYLISTS = [
     spotifyUrl: 'https://open.spotify.com/playlist/0qRsizDqcvjuBkpbLZkL69?si=596dc0215bb648f1',
     spotifyEmbedUrl: 'https://open.spotify.com/embed/playlist/0qRsizDqcvjuBkpbLZkL69?utm_source=generator&theme=0',
     tracks: [
-      'n_VrRuNkbrE', 'Tn37jjI-dlI', 'FJzE1p3mvw8', 'kF5oZgK5p8s', '6LYfwNkkrplbxbheWtkBL2'
+      'n_VrRuNkbrE', '6rvUyBiBtik', 'FJzE1p3mvw8', 'kF5oZgK5p8s', '6LYfwNkkrplbxbheWtkBL2'
     ]
   },
   {

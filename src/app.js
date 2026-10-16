@@ -257,6 +257,17 @@ class MelodiaApp {
         updateSpotifyUI(null);
       });
     }
+
+    // Playlist quick switch buttons in Studio Player Modal
+    document.querySelectorAll('[data-play-playlist]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const plId = btn.getAttribute('data-play-playlist');
+        document.querySelectorAll('[data-play-playlist]').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        audio.playPlaylist(plId);
+        this.showToast(`Playing playlist: ${btn.textContent.trim()}`);
+      });
+    });
   }
 
   /* ------------------------------------------------ Modals Management */

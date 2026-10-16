@@ -728,6 +728,33 @@ a {
   display: none;
 }
 
+/* Modal Playlist Selector Pills */
+.btn-playlist-pill {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-mute);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-smooth);
+}
+
+.btn-playlist-pill:hover {
+  background: var(--glass-bg-hover);
+  color: #ffffff;
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+}
+
+.btn-playlist-pill.active {
+  background: rgba(225, 29, 72, 0.22);
+  border-color: #e11d48;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(225, 29, 72, 0.4);
+}
+
 
 /* ------------------------------------------------ SECTION 3: ARTISTS */
 .artists-content {
@@ -1332,14 +1359,22 @@ a {
   transform: translateX(-50%) translateY(0);
 }
 
-/* Hidden YouTube host container */
+/* Hidden YouTube host container with active dimensions for autoplay */
 #yt-host {
-  position: absolute;
-  width: 1px;
-  height: 1px;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 240px;
+  height: 140px;
   opacity: 0.001;
   pointer-events: none;
-  top: -9999px;
+  z-index: -10;
+}
+
+#yt-host iframe {
+  width: 100% !important;
+  height: 100% !important;
+  border: 0;
 }
 
 /* ------------------------------------------------ Mobile Bottom Bar Navigation */
