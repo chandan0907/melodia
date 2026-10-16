@@ -32,6 +32,7 @@ class MelodiaApp {
     this.setup3DTilt();
     this.setupModals();
     this.setupMiniPlayer();
+    this.setupVolumeControls();
     this.setupListenTogether();
     this.setupContactForm();
     this.setupPWA();
@@ -132,7 +133,7 @@ class MelodiaApp {
 
   /* ------------------------------------------------ Playback State Sync */
   renderPlaybackState(state) {
-    const { isPlaying, track, progress } = state;
+    const { isPlaying, track, progress, volume } = state;
 
     // Mini Player elements
     const dockTitle = document.getElementById('dock-title');
@@ -178,6 +179,43 @@ class MelodiaApp {
     if (modalProgressFill) modalProgressFill.style.width = `${progress}%`;
     if (modalTimeCur) modalTimeCur.textContent = audio.formatTime(track.currentTimeSeconds);
     if (modalTimeDur) modalTimeDur.textContent = track.duration || '3:45';
+
+    // Individual Volume Controls Sync
+    const currentVol = typeof volume === 'number' ? volume : 0.85;
+    const volPct = Math.round(currentVol * 100);
+    const isMuted = volPct === 0;
+
+    const dockVolSlider = document.getElementById('dock-volume-slider');
+    const dockVolIconHigh = document.getElementById('dock-vol-icon-high');
+    const dockVolIconMuted = document.getElementById('dock-vol-icon-muted');
+
+    const modalVolSlider = document.getElementById('modal-volume-slider');
+    const modalVolVal = document.getElementById('modal-volume-val');
+    const modalVolIconHigh = document.getElementById('modal-vol-icon-high');
+    const modalVolIconMuted = document.getElementById('modal-vol-icon-muted');
+
+    const sliderGradient = (pct) => `linear-gradient(90deg, #ff3366 0%, #fb7185 ${pct}%, rgba(255, 255, 255, 0.12) ${pct}%, rgba(255, 255, 255, 0.12) 100%)`;
+
+    if (dockVolSlider && document.activeElement !== dockVolSlider) {
+      dockVolSlider.value = volPct;
+      dockVolSlider.style.background = sliderGradient(volPct);
+    }
+    if (dockVolIconHigh && dockVolIconMuted) {
+      dockVolIconHigh.style.display = isMuted ? 'none' : 'block';
+      dockVolIconMuted.style.display = isMuted ? 'block' : 'none';
+    }
+
+    if (modalVolSlider && document.activeElement !== modalVolSlider) {
+      modalVolSlider.value = volPct;
+      modalVolSlider.style.background = sliderGradient(volPct);
+    }
+    if (modalVolVal) {
+      modalVolVal.textContent = isMuted ? '0% (Muted)' : `${volPct}%`;
+    }
+    if (modalVolIconHigh && modalVolIconMuted) {
+      modalVolIconHigh.style.display = isMuted ? 'none' : 'block';
+      modalVolIconMuted.style.display = isMuted ? 'block' : 'none';
+    }
   }
 
   /* ------------------------------------------------ Mini Player Controls */
@@ -300,6 +338,46 @@ class MelodiaApp {
         this.showToast(`Playing playlist: ${btn.textContent.trim()}`);
       });
     });
+  }
+
+  /* ------------------------------------------------ Individual Volume Controls */
+  setupVolumeControls() {
+    const dockVolSlider = document.getElementById('dock-volume-slider');
+    const dockVolBtn = document.getElementById('dock-volume-btn');
+    const modalVolSlider = document.getElementById('modal-volume-slider');
+    const modalMuteBtn = document.getElementById('modal-volume-mute-btn');
+
+    const updateSliderFill = (slider, val) => {
+      slider.style.background = `linear-gradient(90deg, #ff3366 0%, #fb7185 ${val}%, rgba(255, 255, 255, 0.12) ${val}%, rgba(255, 255, 255, 0.12) 100%)`;
+    };
+
+    if (dockVolSlider) {
+      dockVolSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        updateSliderFill(dockVolSlider, val);
+        audio.setVolume(val / 100);
+      });
+    }
+
+    if (modalVolSlider) {
+      modalVolSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        updateSliderFill(modalVolSlider, val);
+        audio.setVolume(val / 100);
+      });
+    }
+
+    if (dockVolBtn) {
+      dockVolBtn.addEventListener('click', () => {
+        audio.toggleMute();
+      });
+    }
+
+    if (modalMuteBtn) {
+      modalMuteBtn.addEventListener('click', () => {
+        audio.toggleMute();
+      });
+    }
   }
 
   /* ------------------------------------------------ Modals Management */

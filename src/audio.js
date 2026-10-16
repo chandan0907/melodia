@@ -9,6 +9,7 @@ class AudioEngine {
     this.synthTimer = null;
     this.isPlaying = false;
     this.volume = 0.85;
+    this.prevVolume = 0.85;
     this.mode = 'youtube'; // 'youtube' | 'synth'
     
     // Default current track: Awarapan 2 - Toh Phir Aao
@@ -41,10 +42,16 @@ class AudioEngine {
     this.subscribers = new Set();
     this.progressInterval = null;
 
-    // Load saved volume
+    // Load saved individual volume
     try {
       const saved = localStorage.getItem('mel_volume');
-      if (saved) this.volume = parseFloat(saved);
+      if (saved) {
+        const parsed = parseFloat(saved);
+        if (!isNaN(parsed)) {
+          this.volume = Math.max(0, Math.min(1, parsed));
+          if (this.volume > 0) this.prevVolume = this.volume;
+        }
+      }
     } catch (e) {}
   }
 
@@ -123,6 +130,9 @@ class AudioEngine {
           onReady: () => {
             this.ytReady = true;
             this.ytPlayer.setVolume(this.volume * 100);
+            if (this.volume === 0) {
+              try { this.ytPlayer.mute(); } catch (e) {}
+            }
             if (this.queued) {
               const q = this.queued;
               this.queued = null;
@@ -307,16 +317,37 @@ class AudioEngine {
 
   setVolume(val) {
     this.volume = Math.max(0, Math.min(1, val));
+    if (this.volume > 0) {
+      this.prevVolume = this.volume;
+    }
     if (this.synthGain && this.audioCtx) {
       this.synthGain.gain.setValueAtTime(this.volume, this.audioCtx.currentTime);
     }
-    if (this.ytPlayer && this.ytReady && typeof this.ytPlayer.setVolume === 'function') {
-      this.ytPlayer.setVolume(this.volume * 100);
+    if (this.ytPlayer && this.ytReady) {
+      try {
+        if (typeof this.ytPlayer.setVolume === 'function') {
+          this.ytPlayer.setVolume(this.volume * 100);
+        }
+        if (this.volume === 0 && typeof this.ytPlayer.mute === 'function') {
+          this.ytPlayer.mute();
+        } else if (this.volume > 0 && typeof this.ytPlayer.unMute === 'function') {
+          this.ytPlayer.unMute();
+        }
+      } catch (e) {}
     }
     try {
       localStorage.setItem('mel_volume', this.volume.toString());
     } catch (e) {}
     this.notify();
+  }
+
+  toggleMute() {
+    if (this.volume > 0) {
+      this.prevVolume = this.volume;
+      this.setVolume(0);
+    } else {
+      this.setVolume(this.prevVolume || 0.85);
+    }
   }
 
   handleEnded() {
