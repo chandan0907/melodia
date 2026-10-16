@@ -1,0 +1,47 @@
+/* ==========================================================================
+   DESIGN TOKENS & SYSTEM VARIABLES
+   RESPONSIBILITY: Color palette, typography tokens, glassmorphism layers,
+   easing curves, and spacing metrics across the entire application.
+   ========================================================================== */
+
+:root {
+  /* Surface & Background Dark Layers */
+  --bg-deep: #07060a;
+  --bg-surface: #0e0b14;
+  --bg-card: rgba(22, 17, 30, 0.55);
+
+  /* Primary Brand Accent Palette */
+  --accent-crimson: #e11d48;
+  --accent-rose: #f43f5e;
+  --accent-ruby: #be123c;
+  --accent-peach: #fb7185;
+  --accent-fire: #f97316;
+  --accent-glow: rgba(225, 29, 72, 0.45);
+
+  /* Glassmorphism System */
+  --glass-bg: rgba(255, 255, 255, 0.038);
+  --glass-bg-hover: rgba(255, 255, 255, 0.075);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(255, 255, 255, 0.22);
+  --glass-highlight: inset 0 1px 1px rgba(255, 255, 255, 0.14);
+
+  /* Text & Foreground Hierarchy */
+  --text-main: #f9f8fc;
+  --text-mute: #9e96b3;
+  --text-faint: rgba(249, 248, 252, 0.38);
+
+  /* Typography Scales */
+  --font-display: 'Syne', 'Sora', sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Layout Metrics */
+  --nav-height: 84px;
+  --radius-small: 8px;
+  --radius-medium: 16px;
+  --radius-large: 24px;
+  --radius-pill: 9999px;
+
+  /* Fluid Animation & Easing Curves */
+  --ease-spring: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}

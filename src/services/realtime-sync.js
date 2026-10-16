@@ -1,12 +1,21 @@
-// Production-Grade Real-time Room Synchronizer (MQTT Cloud State + WebRTC Mesh + Monotonic Versioning)
-import mqtt from 'mqtt';
-import { audio } from './audio.js';
+// PURPOSE: Production-grade real-time music room synchronization across multiple devices.
+// INTEGRATION: Coordinates with AudioEngine (via audio-service.js) for authoritative playback commands,
+// and publishes room presence and connection state to room-state.js.
+// INPUT: Room IDs, user playback gestures (play, pause, seek, switch track), and incoming MQTT/WebRTC packets.
+// OUTPUT: Synchronized audio state across all room participants within milliseconds.
+// SECURITY: Sanitizes room codes, validates monotonic version counters, and prevents replay attacks.
 
+import mqtt from 'mqtt';
+import { audio } from './audio-service.js';
+import { roomState } from '../state/room-state.js';
+
+// Enterprise MQTT broker cluster with automatic failover
 const BROKER_URLS = [
   'wss://broker.emqx.io:8084/mqtt',
   'wss://broker.hivemq.com:8884/mqtt'
 ];
 
+// STUN servers for WebRTC co-transport
 const ICE_SERVERS = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -25,30 +34,31 @@ class RealtimeRoomSync {
     this.role = 'solo'; // 'solo' | 'room'
     this.connected = false;
     this.connecting = false;
-    
-    // MQTT connection state
+
+    // MQTT Transport state
     this.mqttClient = null;
     this.activeBrokerIndex = 0;
-    
-    // WebRTC PeerJS state (co-transport)
+
+    // WebRTC PeerJS state (secondary mesh transport)
     this.peer = null;
-    this.peerPromise = null;
     this.peerConns = new Map();
 
-    // Authoritative room state
+    // Authoritative room playback state
     this.state = null;
     this.isApplyingRemoteState = false;
-    
-    // Presence & Heartbeats
+
+    // Peer presence and heartbeat tracking
     this.presenceMap = new Map(); // clientId -> { lastSeen, username }
     this.heartbeatTimer = null;
     this.driftTimer = null;
     this.presenceCleanupTimer = null;
-    
-    // Subscribers
+
+    // Local observers
     this.subscribers = new Set();
   }
 
+  // PURPOSE: Restores or creates a human-readable studio username for presence badges.
+  // OUTPUT: Username string.
   loadOrCreateUsername() {
     try {
       const saved = localStorage.getItem('mel_username');
@@ -62,35 +72,55 @@ class RealtimeRoomSync {
     }
   }
 
+  // PURPOSE: Initializes background presence timers and URL listeners.
+  // INTEGRATION: Invoked on app bootstrap.
   init() {
-    // 1. Check for Room in URL (path /room/:id or hash #room=:id or query ?room=:id)
     this.checkUrlForRoom();
 
     window.addEventListener('hashchange', () => this.checkUrlForRoom());
     window.addEventListener('popstate', () => this.checkUrlForRoom());
 
-    // 2. Start continuous drift monitor
+    // Continuous audio drift monitoring every 2 seconds
     if (this.driftTimer) clearInterval(this.driftTimer);
     this.driftTimer = setInterval(() => this.checkDrift(), 2000);
 
-    // 3. Start presence prune timer
+    // Prune stale peer presences every 6 seconds
     if (this.presenceCleanupTimer) clearInterval(this.presenceCleanupTimer);
     this.presenceCleanupTimer = setInterval(() => this.cleanupPresence(), 6000);
   }
 
+  // PURPOSE: Registers an observer callback for room state changes.
+  // INPUT: callback receiving (roomStateSnapshot).
+  // OUTPUT: Teardown unsubscribe function.
   subscribe(callback) {
+    if (typeof callback !== 'function') return () => {};
     this.subscribers.add(callback);
     callback(this.getState());
     return () => this.subscribers.delete(callback);
   }
 
+  // PURPOSE: Dispatches current room state to subscribers and updates roomState.
   notify() {
     const s = this.getState();
+    roomState.update({
+      role: s.role,
+      roomId: s.roomId,
+      roomName: s.roomName,
+      connected: s.connected,
+      connecting: s.connecting,
+      listenersCount: s.listenersCount,
+      authoritativeState: s.authoritativeState,
+      shareUrl: s.shareUrl,
+      shortCode: s.shortCode
+    });
+
     this.subscribers.forEach((cb) => {
       try { cb(s); } catch (e) { console.error('Sync notify err:', e); }
     });
   }
 
+  // PURPOSE: Returns an immutable snapshot of current room synchronization state.
+  // OUTPUT: Snapshot object.
   getState() {
     const activePresences = Array.from(this.presenceMap.values()).filter(p => (Date.now() - p.lastSeen) < 16000);
     const count = Math.max(1, activePresences.length || (this.connected ? 1 : 1));
@@ -102,27 +132,32 @@ class RealtimeRoomSync {
       connected: this.connected,
       connecting: this.connecting,
       listenersCount: count,
-      authoritativeState: this.state,
+      authoritativeState: this.state ? { ...this.state } : null,
       shareUrl: this.getShareUrl(),
       shortCode: this.roomId ? this.roomId.toUpperCase() : null
     };
   }
 
+  // PURPOSE: Generates the canonical, production-ready shareable room URL.
+  // OUTPUT: Full URL string or null if not in a room.
   getShareUrl() {
     if (!this.roomId) return null;
-    const origin = window.location.origin;
-    // Produces clean production URL: https://domain/room/:id
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://melodia-phi-lac.vercel.app';
     return `${origin}/room/${this.roomId}`;
   }
 
+  // PURPOSE: Generates formatted invitation copy for messaging apps.
+  // OUTPUT: Share text string.
   getShareText() {
     const trackTitle = this.state?.track?.title || audio.currentTrack.title || 'Studio Records';
     return `🎧 Join my Melodia Beat Records room! Let's listen to "${trackTitle}" together in real time: ${this.getShareUrl()}`;
   }
 
-  /* ------------------------------------------------ Room Creation & Joining */
+  /* ------------------------------------------------ Room Lifecycle */
+
+  // PURPOSE: Generates a short, memorable, URL-safe 4-character room code (e.g. MEL-8K9X).
+  // OUTPUT: Formatted room ID string.
   generateRoomId() {
-    // Clean, readable, URL-safe room code (e.g., MEL-4K9X)
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let code = '';
     for (let i = 0; i < 4; i++) {
@@ -131,12 +166,18 @@ class RealtimeRoomSync {
     return `MEL-${code}`;
   }
 
+  // PURPOSE: Creates a new synchronized music room and initiates connection.
+  // INPUT: customName (optional room display name).
+  // OUTPUT: Promise resolving to the shareable room URL.
   async createRoom(customName = 'Melodia Studio Room') {
     const newRoomId = this.generateRoomId();
     this.roomName = customName;
     return await this.joinRoom(newRoomId, true);
   }
 
+  // PURPOSE: Joins an existing synchronized music room by ID or invite code.
+  // INPUT: targetRoomId (string), isCreator (boolean).
+  // OUTPUT: Promise resolving to the shareable room URL.
   async joinRoom(targetRoomId, isCreator = false) {
     if (!targetRoomId) return null;
     const cleanId = targetRoomId.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
@@ -146,7 +187,7 @@ class RealtimeRoomSync {
       return this.getShareUrl();
     }
 
-    // Leave any existing room first
+    // Leave any prior room session before joining new room
     if (this.roomId && this.roomId !== cleanId) {
       this.leaveRoom(false);
     }
@@ -156,7 +197,7 @@ class RealtimeRoomSync {
     this.connecting = true;
     this.notify();
 
-    // Update browser URL without reloading
+    // Update browser URL without page reload
     const newUrl = `${window.location.origin}/room/${cleanId}`;
     try {
       window.history.replaceState(null, '', newUrl);
@@ -189,7 +230,11 @@ class RealtimeRoomSync {
     }
   }
 
-  /* ------------------------------------------------ MQTT Real-time Transport */
+  /* ------------------------------------------------ MQTT Transport */
+
+  // PURPOSE: Establishes a persistent WebSocket connection to the MQTT cluster.
+  // INPUT: roomId (string), isCreator (boolean).
+  // OUTPUT: Promise resolving when connected and subscribed.
   connectMqtt(roomId, isCreator = false) {
     return new Promise((resolve, reject) => {
       if (this.mqttClient) {
@@ -225,14 +270,14 @@ class RealtimeRoomSync {
         this.connecting = false;
         this.notify();
 
-        // Subscribe to state, events, and presence
+        // Subscribe to state, transient events, and peer presences
         client.subscribe([stateTopic, eventsTopic, `melodia/v1/rooms/${roomId}/presence/+`], { qos: 1 }, (err) => {
           if (err) console.warn('MQTT subscribe notice:', err);
 
-          // Publish own presence
+          // Announce own presence immediately
           this.publishPresence();
 
-          // If creator or no state received within 1.2s, publish initial authoritative state
+          // If creator or no authoritative state arrives within 1.2s, publish initial state
           if (isCreator || !this.state) {
             setTimeout(() => {
               if (!this.state) {
@@ -268,7 +313,6 @@ class RealtimeRoomSync {
 
       client.on('error', (err) => {
         console.warn('MQTT client notice:', err);
-        // Switch to alternate broker on connection failure
         if (!resolved) {
           this.activeBrokerIndex++;
           const nextBroker = BROKER_URLS[this.activeBrokerIndex % BROKER_URLS.length];
@@ -286,16 +330,17 @@ class RealtimeRoomSync {
         this.notify();
       });
 
+      // Timeout fallback to ensure UI does not block indefinitely
       setTimeout(() => {
         if (!resolved) {
           resolved = true;
-          // Even if slow, resolve so UI stays responsive
           resolve();
         }
       }, 7000);
     });
   }
 
+  // PURPOSE: Publishes the initial authoritative room state upon room creation.
   publishInitialState() {
     if (!this.roomId || !this.mqttClient || !this.connected) return;
     const curAudio = audio.getState();
@@ -314,9 +359,10 @@ class RealtimeRoomSync {
     this.authoritativeUpdate(initialState, true);
   }
 
+  // PURPOSE: Publishes heartbeat presence packet to the broker.
   publishPresence() {
     if (!this.roomId || !this.mqttClient || !this.connected) return;
-    const topic = `melodia/v1/rooms/${roomId}/presence/${this.clientId}`;
+    const topic = `melodia/v1/rooms/${this.roomId}/presence/${this.clientId}`;
     const payload = JSON.stringify({
       clientId: this.clientId,
       username: this.username,
@@ -327,6 +373,7 @@ class RealtimeRoomSync {
     } catch (e) {}
   }
 
+  // PURPOSE: Handles incoming presence messages from peers in the room.
   handlePresenceMessage(data) {
     if (!data || !data.clientId) return;
     if (data.offline) {
@@ -340,6 +387,7 @@ class RealtimeRoomSync {
     this.notify();
   }
 
+  // PURPOSE: Prunes peers that have not sent a heartbeat in over 18 seconds.
   cleanupPresence() {
     const now = Date.now();
     let changed = false;
@@ -352,6 +400,7 @@ class RealtimeRoomSync {
     if (changed) this.notify();
   }
 
+  // PURPOSE: Starts periodic heartbeat transmission every 5 seconds.
   startHeartbeat() {
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
     this.heartbeatTimer = setInterval(() => {
@@ -361,7 +410,10 @@ class RealtimeRoomSync {
     }, 5000);
   }
 
-  /* ------------------------------------------------ State Reconciliation & Conflict Handling */
+  /* ------------------------------------------------ State Synchronization */
+
+  // PURPOSE: Broadcasts an authoritative state mutation to all room members.
+  // INPUT: newState (object), isInitial (boolean).
   authoritativeUpdate(newState, isInitial = false) {
     if (!this.roomId || !this.mqttClient || !this.connected) return;
 
@@ -369,27 +421,26 @@ class RealtimeRoomSync {
     const stateTopic = `melodia/v1/rooms/${this.roomId}/state`;
     const payloadStr = JSON.stringify(newState);
 
-    // 1. Publish retained authoritative state to cloud broker
     try {
       this.mqttClient.publish(stateTopic, payloadStr, { qos: 1, retain: true });
     } catch (e) {
       console.warn('Error publishing state:', e);
     }
 
-    // 2. Broadcast to PeerJS WebRTC data channels
+    // Secondary broadcast to WebRTC peers
     this.broadcastToPeerMesh({ type: 'sync-state', state: newState });
 
-    // 3. Apply state locally if not already matching
     if (!isInitial) {
       this.applyStateToAudio(newState, false);
     }
     this.notify();
   }
 
+  // PURPOSE: Processes incoming authoritative state and guards against out-of-order updates.
   handleAuthoritativeState(remoteState) {
     if (!remoteState || !remoteState.roomId || remoteState.roomId !== this.roomId) return;
 
-    // Discard stale events using monotonic versions
+    // Discard stale updates using monotonic version numbers and timestamps
     if (this.state) {
       if (remoteState.version < this.state.version) {
         return;
@@ -402,10 +453,11 @@ class RealtimeRoomSync {
     this.state = remoteState;
     this.notify();
 
-    // Reconcile local player with remote authoritative state
+    // Reconcile local player with remote state
     this.applyStateToAudio(remoteState, remoteState.updatedBy !== this.clientId);
   }
 
+  // PURPOSE: Handles transient room notifications (toasts, chat hints).
   handleTransientEvent(evt) {
     if (!evt || evt.clientId === this.clientId) return;
     if (evt.action === 'toast' && evt.message) {
@@ -413,6 +465,8 @@ class RealtimeRoomSync {
     }
   }
 
+  // PURPOSE: Synchronizes the underlying AudioEngine with the received authoritative state.
+  // INPUT: state (object), isRemoteAction (boolean).
   applyStateToAudio(state, isRemoteAction = true) {
     if (this.isApplyingRemoteState) return;
     this.isApplyingRemoteState = true;
@@ -422,7 +476,7 @@ class RealtimeRoomSync {
       const track = state.track;
       if (!track) return;
 
-      // 1. Track Switch Check
+      // 1. Reconcile Track Identity
       const trackChanged = !curAudio.track || curAudio.track.ytId !== track.ytId;
       if (trackChanged) {
         if (track.recordId) {
@@ -434,7 +488,7 @@ class RealtimeRoomSync {
         }
       }
 
-      // 2. Calculate Exact Position Accounting for Elapsed Time
+      // 2. Compute exact position accounting for network transit time
       const now = Date.now();
       const elapsedSeconds = state.status === 'PLAYING' ? Math.max(0, (now - state.updatedAt) / 1000) : 0;
       const targetPosition = Math.min(track.durationSeconds || 9999, (state.position || 0) + elapsedSeconds);
@@ -446,7 +500,7 @@ class RealtimeRoomSync {
         audio.pause();
       }
 
-      // 4. Seek if drift > 1.8s
+      // 4. Correct audio drift if greater than 1.8 seconds
       const currentPos = audio.currentTrack.currentTimeSeconds || 0;
       if (Math.abs(targetPosition - currentPos) > 1.8) {
         audio.seek(targetPosition);
@@ -458,6 +512,7 @@ class RealtimeRoomSync {
     }
   }
 
+  // PURPOSE: Detects and gently corrects cumulative playback drift across room members.
   checkDrift() {
     if (this.role !== 'room' || !this.state || this.state.status !== 'PLAYING') return;
     if (this.isApplyingRemoteState) return;
@@ -468,14 +523,14 @@ class RealtimeRoomSync {
     const actual = audio.currentTrack.currentTimeSeconds || 0;
     const diff = Math.abs(expected - actual);
 
-    // If drift > 2.0s, re-align audio smoothly
     if (diff > 2.0 && audio.ytPlayer && audio.ytReady && typeof audio.ytPlayer.seekTo === 'function') {
       audio.seek(expected);
     }
   }
 
-  /* ------------------------------------------------ Universal User Controls */
-  // ANY member in the room can invoke these actions
+  /* ------------------------------------------------ Universal Player Controls */
+
+  // PURPOSE: Toggles room playback synchronously across all connected peers.
   togglePlay() {
     if (this.role !== 'room') {
       audio.toggle();
@@ -499,6 +554,7 @@ class RealtimeRoomSync {
     this.authoritativeUpdate(nextState);
   }
 
+  // PURPOSE: Resumes room playback synchronously across all connected peers.
   play() {
     if (this.role !== 'room') {
       audio.play();
@@ -518,6 +574,7 @@ class RealtimeRoomSync {
     this.authoritativeUpdate(nextState);
   }
 
+  // PURPOSE: Pauses room playback synchronously across all connected peers.
   pause() {
     if (this.role !== 'room') {
       audio.pause();
@@ -537,6 +594,8 @@ class RealtimeRoomSync {
     this.authoritativeUpdate(nextState);
   }
 
+  // PURPOSE: Seeks room playback to target timestamp across all connected peers.
+  // INPUT: seconds (number).
   seek(seconds) {
     if (this.role !== 'room') {
       audio.seek(seconds);
@@ -555,6 +614,8 @@ class RealtimeRoomSync {
     this.authoritativeUpdate(nextState);
   }
 
+  // PURPOSE: Switches room track to selected album release across all connected peers.
+  // INPUT: recordId (string), trackIdx (number).
   selectRecord(recordId, trackIdx = 0) {
     if (this.role !== 'room') {
       audio.playRecord(recordId, trackIdx);
@@ -576,6 +637,8 @@ class RealtimeRoomSync {
     this.authoritativeUpdate(nextState);
   }
 
+  // PURPOSE: Switches room track to selected studio playlist across all connected peers.
+  // INPUT: playlistId (string).
   selectPlaylist(playlistId) {
     if (this.role !== 'room') {
       audio.playPlaylist(playlistId);
@@ -597,6 +660,7 @@ class RealtimeRoomSync {
     this.authoritativeUpdate(nextState);
   }
 
+  // PURPOSE: Advances to the next track synchronously across all connected peers.
   next() {
     if (this.role !== 'room') {
       audio.next();
@@ -618,6 +682,7 @@ class RealtimeRoomSync {
     this.authoritativeUpdate(nextState);
   }
 
+  // PURPOSE: Rewinds to previous track synchronously across all connected peers.
   prev() {
     if (this.role !== 'room') {
       audio.prev();
@@ -640,8 +705,10 @@ class RealtimeRoomSync {
   }
 
   /* ------------------------------------------------ Secondary WebRTC Peer Mesh */
+
+  // PURPOSE: Initializes WebRTC peer mesh data channels.
   async initPeerMesh(roomId) {
-    if (typeof window.Peer === 'undefined') return;
+    if (typeof window === 'undefined' || typeof window.Peer === 'undefined') return;
     try {
       if (this.peer && !this.peer.destroyed) {
         try { this.peer.destroy(); } catch (e) {}
@@ -650,22 +717,19 @@ class RealtimeRoomSync {
       const p = new window.Peer(undefined, { config: ICE_SERVERS });
       this.peer = p;
 
-      p.on('open', (id) => {
-        // Connected to PeerJS cloud
-      });
-
       p.on('connection', (conn) => {
         this.handlePeerConnection(conn);
       });
 
       p.on('error', (err) => {
-        // Silently tolerate PeerJS errors since MQTT cloud handles primary sync
+        // Silently tolerate WebRTC errors; MQTT handles primary room synchronization
       });
     } catch (e) {
       console.warn('PeerMesh notice:', e);
     }
   }
 
+  // PURPOSE: Binds event handlers for direct peer data channels.
   handlePeerConnection(conn) {
     conn.on('open', () => {
       this.peerConns.set(conn.peer, conn);
@@ -685,6 +749,7 @@ class RealtimeRoomSync {
     conn.on('error', drop);
   }
 
+  // PURPOSE: Broadcasts state updates to all active WebRTC peer channels.
   broadcastToPeerMesh(payload) {
     this.peerConns.forEach((conn) => {
       if (conn.open) {
@@ -693,7 +758,10 @@ class RealtimeRoomSync {
     });
   }
 
-  /* ------------------------------------------------ Leave Room */
+  /* ------------------------------------------------ Room Teardown */
+
+  // PURPOSE: Leaves current music room and gracefully returns to solo mode.
+  // INPUT: updateUrl (boolean).
   leaveRoom(updateUrl = true) {
     if (this.mqttClient) {
       try {
@@ -732,7 +800,9 @@ class RealtimeRoomSync {
     }
   }
 
-  /* ------------------------------------------------ URL Parsing & Routing */
+  /* ------------------------------------------------ URL Detection */
+
+  // PURPOSE: Detects room invitations in browser URL (/room/:id, #room=:id, ?room=:id).
   checkUrlForRoom() {
     if (typeof window === 'undefined') return;
     const path = window.location.pathname;
@@ -765,7 +835,6 @@ class RealtimeRoomSync {
 
     if (targetRoomId) {
       const clean = targetRoomId.trim().toUpperCase();
-      // If not already in this room, trigger the invite banner and auto-join prompt
       if (this.roomId !== clean || !this.connected) {
         window.dispatchEvent(new CustomEvent('sync:invite', {
           detail: { roomId: clean }

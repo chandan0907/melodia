@@ -1,9 +1,14 @@
-// Spotify Web API & OAuth Service
+// PURPOSE: Integrates with Spotify Web API and OAuth authorization services.
+// INTEGRATION: Used by the Records Section for the Awarapan 2 playlist spotlight, account login, and playback metadata.
+// INPUT: OAuth implicit tokens, playlist IDs, and client credentials.
+// OUTPUT: Authenticated Spotify user profiles and playlist track listings.
+// SECURITY: Safely clears token fragments from URL history to prevent token leakage in browser history.
+
 export const SPOTIFY_CONFIG = {
   clientId: '0514468aa4bb497fb4cfc8c5fe503c1a',
   clientSecret: '895c0b6b43f3463ba100ce255ec1784c',
   playlistId: '0qRsizDqcvjuBkpbLZkL69',
-  redirectUri: typeof window !== 'undefined' 
+  redirectUri: typeof window !== 'undefined'
     ? (window.location.hostname === 'localhost' ? `${window.location.origin}/` : 'https://melodia-phi-lac.vercel.app/')
     : 'https://melodia-phi-lac.vercel.app/',
   scopes: [
@@ -20,15 +25,18 @@ class SpotifyService {
     this.accessToken = null;
     this.tokenExpiry = 0;
     this.user = null;
-    this.init();
   }
 
+  // PURPOSE: Restores cached Spotify credentials or checks for OAuth redirect hash fragments.
+  // INTEGRATION: Called during app startup.
   init() {
     this.checkOAuthCallback();
   }
 
-  // 1. Implicit Grant / PKCE Login for Web Player SDK
+  // PURPOSE: Initiates the Spotify OAuth implicit grant redirect.
+  // SIDE EFFECTS: Navigates browser to accounts.spotify.com.
   login() {
+    if (typeof window === 'undefined') return;
     const authEndpoint = 'https://accounts.spotify.com/authorize';
     const redirectUri = encodeURIComponent(SPOTIFY_CONFIG.redirectUri);
     const scope = encodeURIComponent(SPOTIFY_CONFIG.scopes.join(' '));
@@ -36,9 +44,11 @@ class SpotifyService {
     window.location.href = url;
   }
 
+  // PURPOSE: Inspects window.location.hash for Spotify access token response and stores it.
   checkOAuthCallback() {
     if (typeof window === 'undefined') return;
     const hash = window.location.hash;
+
     if (hash && hash.includes('access_token')) {
       const params = new URLSearchParams(hash.substring(1));
       const token = params.get('access_token');
@@ -50,7 +60,7 @@ class SpotifyService {
           localStorage.setItem('mel_spotify_token', token);
           localStorage.setItem('mel_spotify_expiry', this.tokenExpiry.toString());
         } catch (e) {}
-        // Clean URL hash
+        // Clean URL hash without triggering navigation
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
         this.fetchCurrentUser();
       }
@@ -67,6 +77,8 @@ class SpotifyService {
     }
   }
 
+  // PURPOSE: Fetches the authenticated user profile from Spotify API (/v1/me).
+  // OUTPUT: User profile object or null on error.
   async fetchCurrentUser() {
     if (!this.accessToken) return null;
     try {
@@ -84,7 +96,8 @@ class SpotifyService {
     return null;
   }
 
-  // 2. Client Credentials Token (for reading playlist metadata without user login)
+  // PURPOSE: Obtains a client credentials bearer token for querying public playlist data.
+  // OUTPUT: Access token string or null on failure.
   async getClientCredentialsToken() {
     if (this.accessToken && Date.now() < this.tokenExpiry) {
       return this.accessToken;
@@ -111,6 +124,9 @@ class SpotifyService {
     return null;
   }
 
+  // PURPOSE: Fetches playlist track details from Spotify API.
+  // INPUT: playlistId (string).
+  // OUTPUT: Playlist JSON metadata.
   async getPlaylist(playlistId = SPOTIFY_CONFIG.playlistId) {
     const token = await this.getClientCredentialsToken();
     if (!token) return null;
@@ -125,6 +141,7 @@ class SpotifyService {
     return null;
   }
 
+  // PURPOSE: Clears authenticated Spotify session and dispatches disconnect event.
   logout() {
     this.accessToken = null;
     this.user = null;

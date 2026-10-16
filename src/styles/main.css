@@ -1,0 +1,23 @@
+/* ==========================================================================
+   MELODIA BEAT RECORDS — LUXURY GLASSMORPHIC DESIGN SYSTEM
+   MASTER STYLESHEET ENTRY POINT
+   
+   ARCHITECTURE:
+   - tokens.css: CSS custom properties, color palette, typography scales, metrics
+   - global.css: Resets, atmosphere canvas, noise overlay, accessibility
+   - layout.css: Header, navigation, rails, snap container, mobile nav
+   - sections.css: Hero, 3D records showcase, Spotify spotlight, artists, contact
+   - player.css: Mini player dock, studio master modal, vinyl spinning animation
+   - volume.css: Individual volume controls, range slider styles, mute buttons
+   - room.css: Synchronized Listen Together box, invite banner, presence badges
+   - modals.css: Glassmorphic backdrop modals, catalogue grids, app toast
+   ========================================================================== */
+
+@import './tokens.css';
+@import './global.css';
+@import './layout.css';
+@import './sections.css';
+@import './player.css';
+@import './volume.css';
+@import './room.css';
+@import './modals.css';

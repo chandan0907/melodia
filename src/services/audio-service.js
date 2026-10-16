@@ -1,17 +1,25 @@
-// Unified Audio Engine: YouTube Streaming Player + Web Audio Ambient Synth + PeerJS Sync
-import { RECORDS, PLAYLISTS } from './data.js';
+// PURPOSE: Unified audio playback engine managing YouTube audio streaming, Web Audio ambient synthesis fallback, and individual volume management.
+// INTEGRATION: Communicates with RealtimeRoomSync for synchronized room playback, and audioState for reactive UI updates across all components.
+// INPUT: Track metadata, record IDs, playlist identifiers, seek offsets, and user volume levels.
+// OUTPUT: High-fidelity audio playback via YouTube iframe API or HTML5 Web Audio API synthesizer.
+
+import { RECORDS, PLAYLISTS } from '../data.js';
+import { audioState } from '../state/audio-state.js';
 
 class AudioEngine {
   constructor() {
+    // Web Audio API context and synthesizer nodes
     this.audioCtx = null;
     this.analyser = null;
     this.synthGain = null;
     this.synthTimer = null;
+
+    // Playback state flags
     this.isPlaying = false;
     this.volume = 0.85;
     this.prevVolume = 0.85;
     this.mode = 'youtube'; // 'youtube' | 'synth'
-    
+
     // Default current track: Awarapan 2 - Toh Phir Aao
     this.currentTrack = {
       title: 'Toh Phir Aao',
@@ -26,23 +34,26 @@ class AudioEngine {
       trackIdx: 0
     };
 
-    // YouTube state
+    // YouTube Iframe Player state
     this.ytPlayer = null;
     this.ytReady = false;
     this.queued = null; // { ytId, startSeconds }
     this.queue = [];
     this.queueIndex = 0;
-    
-    // Sync / PeerJS
-    this.role = 'solo'; // 'solo' | 'host' | 'guest'
-    this.peer = null;
-    this.hostConn = null;
-    this.guestConns = [];
-    
+
+    // Observers and intervals
     this.subscribers = new Set();
     this.progressInterval = null;
 
-    // Load saved individual volume
+    // Restore individual device volume from persistent local storage
+    this.loadSavedVolume();
+  }
+
+  // PURPOSE: Restores previously saved individual user volume preferences from localStorage.
+  // INTEGRATION: Called during AudioEngine initialization.
+  // INPUT: None.
+  // OUTPUT: Updates internal volume state.
+  loadSavedVolume() {
     try {
       const saved = localStorage.getItem('mel_volume');
       if (saved) {
@@ -52,44 +63,69 @@ class AudioEngine {
           if (this.volume > 0) this.prevVolume = this.volume;
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      // Ignore localStorage access failures in sandboxed environments
+    }
   }
 
+  // PURPOSE: Initializes the YouTube Iframe API and starts the high-resolution progress ticker.
+  // INTEGRATION: Invoked by the main application orchestrator during bootstrap.
+  // SIDE EFFECTS: Injects YouTube iframe API script tag into document head and starts a 250ms interval.
   init() {
     this.initYouTube();
     this.startProgressTicker();
+    this.notify();
   }
 
+  // PURPOSE: Registers an observer callback for audio state changes.
+  // INPUT: callback function receiving (stateSnapshot).
+  // OUTPUT: Teardown unsubscribe function.
   subscribe(callback) {
+    if (typeof callback !== 'function') return () => {};
     this.subscribers.add(callback);
     callback(this.getState());
     return () => this.subscribers.delete(callback);
   }
 
+  // PURPOSE: Dispatches current playback state to subscribers and syncs to audioState.
+  // INTEGRATION: Updates native MediaSession metadata and triggers UI re-renders.
   notify() {
     const state = this.getState();
+    audioState.update({
+      isPlaying: state.isPlaying,
+      volume: state.volume,
+      mode: state.mode,
+      track: state.track,
+      progress: state.progress
+    });
+
     this.subscribers.forEach((cb) => {
-      try { cb(state); } catch (e) { console.error(e); }
+      try { cb(state); } catch (e) { console.error('AudioEngine notify error:', e); }
     });
     this.updateMediaSession();
   }
 
+  // PURPOSE: Returns an immutable snapshot of the current audio playback state.
+  // OUTPUT: State snapshot object.
   getState() {
     return {
       isPlaying: this.isPlaying,
       volume: this.volume,
       mode: this.mode,
       track: { ...this.currentTrack },
-      progress: this.currentTrack.durationSeconds > 0 
-        ? (this.currentTrack.currentTimeSeconds / this.currentTrack.durationSeconds) * 100 
-        : 0,
-      role: this.role,
-      listenersCount: this.role === 'host' ? this.guestConns.length + 1 : (this.role === 'guest' ? 2 : 1)
+      progress: this.currentTrack.durationSeconds > 0
+        ? (this.currentTrack.currentTimeSeconds / this.currentTrack.durationSeconds) * 100
+        : 0
     };
   }
 
-  /* ------------------------------------------------ YouTube Player */
+  /* ------------------------------------------------ YouTube Player Engine */
+
+  // PURPOSE: Asynchronously loads the YouTube Iframe API if not already present.
+  // INTEGRATION: Injects script into document.head and hooks window.onYouTubeIframeAPIReady.
   initYouTube() {
+    if (typeof window === 'undefined') return;
+
     if (window.YT && window.YT.Player) {
       this.setupYTPlayer();
     } else {
@@ -107,6 +143,8 @@ class AudioEngine {
     }
   }
 
+  // PURPOSE: Instantiates the YouTube iframe player inside the programmatic container.
+  // INTEGRATION: Binds player state events (playing, paused, ended, error) to the AudioEngine.
   setupYTPlayer() {
     const container = document.getElementById('yt-host');
     if (!container || this.ytPlayer) return;
@@ -153,8 +191,8 @@ class AudioEngine {
           },
           onError: (err) => {
             console.warn('YouTube playback notice:', err);
-            // Move to next track or ambient fallback
-            setTimeout(() => this.next(), 500);
+            // Move to next track automatically upon video restriction
+            setTimeout(() => this.next(), 600);
           }
         }
       });
@@ -163,6 +201,8 @@ class AudioEngine {
     }
   }
 
+  // PURPOSE: Loads and starts video playback on the underlying YouTube player.
+  // INPUT: ytId (YouTube Video ID string), startSeconds (seek offset in seconds).
   playYouTubeVideo(ytId, startSeconds = 0) {
     this.mode = 'youtube';
     this.isPlaying = true;
@@ -180,15 +220,17 @@ class AudioEngine {
       }
     } else {
       this.queued = { ytId, startSeconds };
-      // Play ambient sound while buffering/connecting
+      // Play ambient sound while buffering or awaiting API readiness
       this.startSynthSequence();
     }
 
     this.notify();
-    this.broadcastSync();
   }
 
   /* ------------------------------------------------ Playback Controls */
+
+  // PURPOSE: Loads and plays a record album track by ID and index.
+  // INPUT: recordId (string), trackIdx (number).
   playRecord(recordId, trackIdx = 0) {
     const record = RECORDS.find((r) => r.id === recordId) || RECORDS[0];
     const track = record.tracks[trackIdx] || record.tracks[0];
@@ -216,6 +258,8 @@ class AudioEngine {
     }
   }
 
+  // PURPOSE: Loads and plays an entire curated playlist queue.
+  // INPUT: playlistId (string).
   playPlaylist(playlistId) {
     const pl = PLAYLISTS.find((p) => p.id === playlistId) || PLAYLISTS[0];
     this.queue = [...pl.tracks];
@@ -237,6 +281,7 @@ class AudioEngine {
     this.playYouTubeVideo(firstId, 0);
   }
 
+  // PURPOSE: Resumes current playback.
   play() {
     this.isPlaying = true;
     if (this.mode === 'youtube' && this.ytPlayer && this.ytReady && typeof this.ytPlayer.playVideo === 'function') {
@@ -246,9 +291,9 @@ class AudioEngine {
       this.startSynthSequence();
     }
     this.notify();
-    this.broadcastSync();
   }
 
+  // PURPOSE: Pauses current playback.
   pause() {
     this.isPlaying = false;
     if (this.ytPlayer && this.ytReady && typeof this.ytPlayer.pauseVideo === 'function') {
@@ -256,9 +301,9 @@ class AudioEngine {
     }
     this.stopSynthSequence();
     this.notify();
-    this.broadcastSync();
   }
 
+  // PURPOSE: Toggles between play and pause states.
   toggle() {
     if (this.isPlaying) {
       this.pause();
@@ -267,19 +312,22 @@ class AudioEngine {
     }
   }
 
+  // PURPOSE: Seeks playback to a specific offset in seconds.
+  // INPUT: seconds (number).
   seek(seconds) {
     this.currentTrack.currentTimeSeconds = Math.max(0, Math.min(seconds, this.currentTrack.durationSeconds || seconds));
     if (this.ytPlayer && this.ytReady && typeof this.ytPlayer.seekTo === 'function') {
       try {
         this.ytPlayer.seekTo(this.currentTrack.currentTimeSeconds, true);
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Seek error:', e);
+      }
     }
     this.notify();
-    this.broadcastSync();
   }
 
+  // PURPOSE: Advances to the next track in current album or playlist queue.
   next() {
-    // If playing record with tracklist
     if (this.currentTrack.recordId) {
       const record = RECORDS.find((r) => r.id === this.currentTrack.recordId);
       if (record && record.tracks.length > 0) {
@@ -288,7 +336,6 @@ class AudioEngine {
         return;
       }
     }
-    // Next in playlist queue
     if (this.queue.length > 0) {
       this.queueIndex = (this.queueIndex + 1) % this.queue.length;
       const nextId = this.queue[this.queueIndex];
@@ -297,12 +344,12 @@ class AudioEngine {
       this.playYouTubeVideo(nextId, 0);
       return;
     }
-    // Advance to next album
     const currentIdx = RECORDS.findIndex((r) => r.id === this.currentTrack.recordId);
     const nextRec = RECORDS[(currentIdx + 1) % RECORDS.length] || RECORDS[0];
     this.playRecord(nextRec.id, 0);
   }
 
+  // PURPOSE: Returns to previous track in current album or restarts current track.
   prev() {
     if (this.currentTrack.recordId) {
       const record = RECORDS.find((r) => r.id === this.currentTrack.recordId);
@@ -312,9 +359,18 @@ class AudioEngine {
         return;
       }
     }
-    this.toggle();
+    this.seek(0);
   }
 
+  // PURPOSE: Handles end-of-track event by advancing to the next queued item.
+  handleEnded() {
+    this.next();
+  }
+
+  /* ------------------------------------------------ Volume Control */
+
+  // PURPOSE: Sets local device audio volume without affecting room peers.
+  // INPUT: val (number from 0.0 to 1.0).
   setVolume(val) {
     this.volume = Math.max(0, Math.min(1, val));
     if (this.volume > 0) {
@@ -341,6 +397,7 @@ class AudioEngine {
     this.notify();
   }
 
+  // PURPOSE: Toggles between muted and restored volume.
   toggleMute() {
     if (this.volume > 0) {
       this.prevVolume = this.volume;
@@ -350,177 +407,168 @@ class AudioEngine {
     }
   }
 
-  handleEnded() {
-    this.next();
-  }
+  /* ------------------------------------------------ Progress & Timing */
 
+  // PURPOSE: Starts an interval timer to continuously track playback position.
   startProgressTicker() {
     if (this.progressInterval) clearInterval(this.progressInterval);
-
     this.progressInterval = setInterval(() => {
       if (!this.isPlaying) return;
 
       if (this.mode === 'youtube' && this.ytPlayer && this.ytReady && typeof this.ytPlayer.getCurrentTime === 'function') {
         try {
-          const cur = this.ytPlayer.getCurrentTime() || 0;
-          const dur = this.ytPlayer.getDuration() || this.currentTrack.durationSeconds;
-          if (dur > 0) {
+          const cur = this.ytPlayer.getCurrentTime();
+          const dur = this.ytPlayer.getDuration();
+          if (typeof cur === 'number' && !isNaN(cur)) {
             this.currentTrack.currentTimeSeconds = cur;
+          }
+          if (typeof dur === 'number' && !isNaN(dur) && dur > 0) {
             this.currentTrack.durationSeconds = dur;
             this.currentTrack.duration = this.formatTime(dur);
           }
         } catch (e) {}
       } else {
-        this.currentTrack.currentTimeSeconds += 1;
-        if (this.currentTrack.currentTimeSeconds >= this.currentTrack.durationSeconds) {
+        this.currentTrack.currentTimeSeconds = (this.currentTrack.currentTimeSeconds || 0) + 0.25;
+        if (this.currentTrack.durationSeconds && this.currentTrack.currentTimeSeconds >= this.currentTrack.durationSeconds) {
           this.handleEnded();
         }
       }
+
       this.notify();
-    }, 1000);
+    }, 250);
   }
 
-  /* ------------------------------------------------ Web Audio Synthesizer */
+  // PURPOSE: Formats seconds into a human-readable mm:ss string.
+  // INPUT: totalSeconds (number).
+  // OUTPUT: Formatted time string (e.g. "4:15").
+  formatTime(totalSeconds) {
+    if (!totalSeconds || isNaN(totalSeconds)) return '0:00';
+    const s = Math.floor(totalSeconds);
+    const m = Math.floor(s / 60);
+    const rem = s % 60;
+    return `${m}:${rem < 10 ? '0' : ''}${rem}`;
+  }
+
+  // PURPOSE: Parses duration strings ("mm:ss") into seconds.
+  // INPUT: durStr (string).
+  // OUTPUT: Total seconds (number).
+  parseDuration(durStr) {
+    if (!durStr) return 240;
+    const parts = durStr.split(':').map(Number);
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+    return 240;
+  }
+
+  /* ------------------------------------------------ Ambient Web Audio Synthesizer */
+
+  // PURPOSE: Initializes or resumes the Web Audio API context for ambient synthesis and audio analysis.
   ensureAudioContext() {
+    if (typeof window === 'undefined') return;
     if (!this.audioCtx) {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      this.audioCtx = new AudioContext();
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      this.audioCtx = new AudioCtx();
       this.analyser = this.audioCtx.createAnalyser();
-      this.analyser.fftSize = 128;
-      this.analyser.smoothingTimeConstant = 0.85;
+      this.analyser.fftSize = 64;
+      this.analyser.smoothingTimeConstant = 0.8;
 
       this.synthGain = this.audioCtx.createGain();
-      this.synthGain.gain.setValueAtTime(this.volume * 0.5, this.audioCtx.currentTime);
+      this.synthGain.gain.setValueAtTime(this.volume * 0.45, this.audioCtx.currentTime);
 
       this.synthGain.connect(this.analyser);
       this.analyser.connect(this.audioCtx.destination);
     }
-
     if (this.audioCtx.state === 'suspended') {
       this.audioCtx.resume();
     }
   }
 
+  // PURPOSE: Starts algorithmic ambient chord progression playback for atmospheric studio background.
   startSynthSequence() {
     this.ensureAudioContext();
-    if (this.synthTimer) clearInterval(this.synthTimer);
+    if (!this.audioCtx) return;
+    this.stopSynthSequence();
 
-    // Warm chord progression (Dm -> Bb -> Gm -> A7)
     const chords = [
-      [146.83, 174.61, 220.00, 261.63], // Dm7
-      [116.54, 146.83, 174.61, 233.08], // Bbmaj7
-      [98.00, 116.54, 146.83, 196.00],  // Gm7
-      [110.00, 138.59, 164.81, 220.00]  // A7
+      [146.83, 220.00, 261.63, 329.63], // Dm9
+      [130.81, 196.00, 261.63, 329.63], // Cmaj9
+      [116.54, 174.61, 220.00, 261.63], // Bbmaj7
+      [110.00, 164.81, 220.00, 261.63]  // Am7
     ];
-    let step = 0;
+    let chordIdx = 0;
 
-    const playChordStep = () => {
+    const playNext = () => {
       if (!this.isPlaying) return;
-      const chord = chords[step % chords.length];
-      const now = this.audioCtx.currentTime;
-
-      chord.forEach((freq, idx) => {
-        const osc = this.audioCtx.createOscillator();
-        const noteGain = this.audioCtx.createGain();
-        const filter = this.audioCtx.createBiquadFilter();
-
-        osc.type = idx === 0 ? 'sine' : 'triangle';
-        osc.frequency.setValueAtTime(freq, now);
-
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(450 + Math.sin(now * 0.4) * 150, now);
-        filter.Q.value = 1.5;
-
-        const attack = 0.35 + idx * 0.05;
-        const decay = 2.2;
-        noteGain.gain.setValueAtTime(0.0001, now);
-        noteGain.gain.exponentialRampToValueAtTime(0.06 / (idx + 1), now + attack);
-        noteGain.gain.exponentialRampToValueAtTime(0.0001, now + attack + decay);
-
-        osc.connect(filter);
-        filter.connect(noteGain);
-        noteGain.connect(this.synthGain);
-
-        osc.start(now);
-        osc.stop(now + attack + decay + 0.1);
-      });
-
-      step++;
+      this.playChord(chords[chordIdx]);
+      chordIdx = (chordIdx + 1) % chords.length;
+      this.synthTimer = setTimeout(playNext, 4500);
     };
 
-    playChordStep();
-    this.synthTimer = setInterval(playChordStep, 2400);
+    playNext();
   }
 
+  // PURPOSE: Synthesizes warm analog polysynth tones using filtered harmonic sawtooth oscillators.
+  // INPUT: freqs (array of frequency numbers in Hz).
+  playChord(freqs) {
+    if (!this.audioCtx || this.audioCtx.state !== 'running') return;
+    const now = this.audioCtx.currentTime;
+
+    freqs.forEach((freq, idx) => {
+      const osc = this.audioCtx.createOscillator();
+      const filter = this.audioCtx.createBiquadFilter();
+      const gain = this.audioCtx.createGain();
+
+      osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+      osc.frequency.setValueAtTime(freq, now);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(650, now);
+      filter.frequency.exponentialRampToValueAtTime(1400, now + 1.8);
+      filter.frequency.exponentialRampToValueAtTime(450, now + 4.2);
+
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.08 / freqs.length, now + 0.9);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 4.2);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.synthGain);
+
+      osc.start(now);
+      osc.stop(now + 4.4);
+    });
+  }
+
+  // PURPOSE: Stops active ambient synthesizer sequence.
   stopSynthSequence() {
     if (this.synthTimer) {
-      clearInterval(this.synthTimer);
+      clearTimeout(this.synthTimer);
       this.synthTimer = null;
     }
   }
 
-  getFrequencyData(array) {
-    if (this.analyser && this.mode === 'synth') {
-      this.analyser.getByteFrequencyData(array);
-    } else {
-      // Procedural animated energy during YouTube streaming
-      const time = Date.now() * 0.004;
-      for (let i = 0; i < array.length; i++) {
-        if (this.isPlaying) {
-          const wave = Math.sin(time + i * 0.3) * 0.5 + Math.sin(time * 1.8 + i * 0.15) * 0.3 + 0.5;
-          array[i] = Math.floor(wave * 140 + 40);
-        } else {
-          array[i] = 6;
-        }
-      }
-    }
-  }
+  /* ------------------------------------------------ MediaSession API */
 
-  parseDuration(str) {
-    if (!str) return 210;
-    const parts = str.split(':').map(Number);
-    if (parts.length === 2) return parts[0] * 60 + parts[1];
-    return 210;
-  }
-
-  formatTime(seconds) {
-    if (!isFinite(seconds) || seconds < 0) seconds = 0;
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
-  }
-
+  // PURPOSE: Updates browser system lockscreen and notification media playback controls.
   updateMediaSession() {
-    if (!('mediaSession' in navigator) || !window.MediaMetadata) return;
+    if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return;
+
     try {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: this.currentTrack.title,
-        artist: this.currentTrack.artist,
-        album: this.currentTrack.album,
+      navigator.mediaSession.metadata = new window.MediaMetadata({
+        title: this.currentTrack.title || 'Studio Playback',
+        artist: this.currentTrack.artist || 'Beat Records',
+        album: this.currentTrack.album || 'Melodia',
         artwork: [
-          { src: this.currentTrack.cover, sizes: '512x512', type: 'image/jpeg' }
+          { src: this.currentTrack.cover || './assets/images/album_love.jpg', sizes: '512x512', type: 'image/jpeg' }
         ]
       });
 
-      navigator.mediaSession.setActionHandler('play', () => this.toggle());
-      navigator.mediaSession.setActionHandler('pause', () => this.toggle());
-      navigator.mediaSession.setActionHandler('nexttrack', () => this.next());
+      navigator.mediaSession.setActionHandler('play', () => this.play());
+      navigator.mediaSession.setActionHandler('pause', () => this.pause());
       navigator.mediaSession.setActionHandler('previoustrack', () => this.prev());
-    } catch (e) {}
-  }
-
-  /* --------------------------------------------- Listen Together (PeerJS) */
-  broadcastSync() {
-    if (this.role === 'host' && this.guestConns.length > 0) {
-      const payload = {
-        action: 'sync',
-        track: this.currentTrack,
-        isPlaying: this.isPlaying,
-        time: this.currentTrack.currentTimeSeconds
-      };
-      this.guestConns.forEach((conn) => {
-        if (conn.open) conn.send(payload);
-      });
+      navigator.mediaSession.setActionHandler('nexttrack', () => this.next());
+    } catch (e) {
+      // Ignore unsupported browser handlers
     }
   }
 }

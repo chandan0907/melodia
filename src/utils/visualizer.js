@@ -1,14 +1,26 @@
-// Visualizer Engine: Atmospheric Bokeh Particles & Real-time Audio Spectrum
-import { audio } from './audio.js';
+// PURPOSE: Real-time visual rendering engines for background bokeh atmosphere and audio spectrum wave analyzers.
+// INTEGRATION: Listens to AudioEngine state to dynamically adjust particle agitation and frequency spectrum bars.
+// INPUT: Target HTML5 Canvas element IDs and frequency audio data.
+// OUTPUT: 60 FPS GPU-accelerated canvas animations with fluid mouse parallax.
 
+import { audio } from '../services/audio-service.js';
+
+/**
+ * BackgroundAtmosphere handles deep ambient bokeh particle rendering with mouse parallax.
+ */
 export class BackgroundAtmosphere {
   constructor(canvasId) {
-    this.canvas = document.getElementById(canvasId);
+    this.canvas = typeof canvasId === 'string' ? document.getElementById(canvasId) : canvasId;
     if (!this.canvas) return;
     this.ctx = this.canvas.getContext('2d');
     this.particles = [];
     this.numParticles = 45;
-    this.mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2, targetX: window.innerWidth / 2, targetY: window.innerHeight / 2 };
+    this.mouse = {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+      targetX: window.innerWidth / 2,
+      targetY: window.innerHeight / 2
+    };
     this.time = 0;
     this.running = false;
 
@@ -19,6 +31,7 @@ export class BackgroundAtmosphere {
     this.init();
   }
 
+  // PURPOSE: Sets up particle pools, event listeners, and starts the render loop.
   init() {
     this.resize();
     window.addEventListener('resize', this.resize);
@@ -30,7 +43,7 @@ export class BackgroundAtmosphere {
       }
     }, { passive: true });
 
-    // Palette inspired by reference: Deep wine red, crimson embers, peach glow, subtle cyan depth
+    // Curated studio palette: Deep wine red, crimson embers, peach glow, and subtle cyan depth
     const colors = [
       { r: 225, g: 29, b: 72 },   // Crimson
       { r: 180, g: 18, b: 60 },   // Deep burgundy
@@ -43,8 +56,8 @@ export class BackgroundAtmosphere {
     for (let i = 0; i < this.numParticles; i++) {
       const c = colors[Math.floor(Math.random() * colors.length)];
       this.particles.push({
-        x: Math.random() * this.canvas.width,
-        y: Math.random() * this.canvas.height,
+        x: Math.random() * (this.canvas.width || window.innerWidth),
+        y: Math.random() * (this.canvas.height || window.innerHeight),
         vx: (Math.random() - 0.5) * 0.4,
         vy: (Math.random() - 0.5) * 0.35,
         radius: Math.random() * 90 + 35,
@@ -60,6 +73,7 @@ export class BackgroundAtmosphere {
     requestAnimationFrame(this.loop);
   }
 
+  // PURPOSE: Resizes canvas buffer with device pixel ratio scaling for crisp retina display.
   resize() {
     if (!this.canvas) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -67,16 +81,20 @@ export class BackgroundAtmosphere {
     this.height = window.innerHeight;
     this.canvas.width = this.width * dpr;
     this.canvas.height = this.height * dpr;
-    this.ctx.scale(dpr, dpr);
+    if (this.ctx) {
+      this.ctx.scale(dpr, dpr);
+    }
   }
 
+  // PURPOSE: Tracks mouse position for interactive inertia parallax.
   onMouseMove(e) {
     this.mouse.targetX = e.clientX;
     this.mouse.targetY = e.clientY;
   }
 
+  // PURPOSE: Main requestAnimationFrame render loop drawing blurred bokeh particles.
   loop() {
-    if (!this.running) return;
+    if (!this.running || !this.ctx) return;
     this.time += 0.015;
 
     // Smooth mouse interpolation
@@ -87,26 +105,22 @@ export class BackgroundAtmosphere {
     const w = this.width;
     const h = this.height;
 
-    // Deep dark background clear
     ctx.clearRect(0, 0, w, h);
 
-    // Audio reactivity boost
+    // Dynamic boost when audio is actively playing
     const audioState = audio.getState();
     const boost = audioState.isPlaying ? 1.35 : 1.0;
 
-    // Draw blurred bokeh embers
     this.particles.forEach((p) => {
       p.x += p.vx;
       p.y += p.vy;
 
-      // Wrap around edges with margin
       const margin = 120;
       if (p.x < -margin) p.x = w + margin;
       if (p.x > w + margin) p.x = -margin;
       if (p.y < -margin) p.y = h + margin;
       if (p.y > h + margin) p.y = -margin;
 
-      // Interactive gentle parallax toward mouse
       const dx = (this.mouse.x - w / 2) * 0.02;
       const dy = (this.mouse.y - h / 2) * 0.02;
 
@@ -137,77 +151,119 @@ export class BackgroundAtmosphere {
 
     requestAnimationFrame(this.loop);
   }
+
+  // PURPOSE: Stops canvas animation and cleans up listeners.
+  destroy() {
+    this.running = false;
+    window.removeEventListener('resize', this.resize);
+    window.removeEventListener('mousemove', this.onMouseMove);
+  }
 }
 
+/**
+ * SpectrumVisualizer renders audio frequency bars with neon gradient fills.
+ */
 export class SpectrumVisualizer {
   constructor(canvasId) {
-    this.canvas = document.getElementById(canvasId);
+    this.canvas = typeof canvasId === 'string' ? document.getElementById(canvasId) : canvasId;
     if (!this.canvas) return;
     this.ctx = this.canvas.getContext('2d');
     this.freqData = new Uint8Array(48);
     this.time = 0;
+    this.running = false;
+
+    this.resize = this.resize.bind(this);
+    this.draw = this.draw.bind(this);
+
     this.init();
   }
 
+  // PURPOSE: Resizes canvas and starts drawing loop.
   init() {
     this.resize();
-    window.addEventListener('resize', () => this.resize());
-    this.loop = this.loop.bind(this);
-    requestAnimationFrame(this.loop);
+    window.addEventListener('resize', this.resize);
+    this.running = true;
+    requestAnimationFrame(this.draw);
   }
 
+  // PURPOSE: Synchronizes canvas resolution with bounding client dimensions.
   resize() {
     if (!this.canvas) return;
-    const r = this.canvas.getBoundingClientRect();
+    const rect = this.canvas.getBoundingClientRect();
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    this.canvas.width = (r.width || 300) * dpr;
-    this.canvas.height = (r.height || 48) * dpr;
-    this.ctx.scale(dpr, dpr);
-    this.width = r.width || 300;
-    this.height = r.height || 48;
+    this.width = rect.width || 280;
+    this.height = rect.height || 48;
+    this.canvas.width = this.width * dpr;
+    this.canvas.height = this.height * dpr;
+    if (this.ctx) {
+      this.ctx.scale(dpr, dpr);
+    }
   }
 
-  loop() {
-    this.time += 0.05;
+  // PURPOSE: Renders animated vertical equalizer frequency bars.
+  draw() {
+    if (!this.running || !this.ctx) return;
+    this.time += 0.08;
+
     const ctx = this.ctx;
     const w = this.width;
     const h = this.height;
 
     ctx.clearRect(0, 0, w, h);
-    audio.getFrequencyData(this.freqData);
-    const isPlaying = audio.getState().isPlaying;
 
-    const barCount = 36;
-    const barWidth = Math.max(2, (w / barCount) * 0.65);
-    const gap = (w - barCount * barWidth) / (barCount - 1);
+    const audioState = audio.getState();
+    const isPlaying = audioState.isPlaying;
 
-    // Gradient matching theme: Crimson to fiery rose/amber
+    // Use Web Audio analyser data when available; otherwise use harmonic synthesis simulation
+    if (audio.analyser && isPlaying) {
+      audio.analyser.getByteFrequencyData(this.freqData);
+    } else {
+      for (let i = 0; i < this.freqData.length; i++) {
+        if (isPlaying) {
+          const wave1 = Math.sin(this.time * 2 + i * 0.45) * 45 + 50;
+          const wave2 = Math.cos(this.time * 3 + i * 0.8) * 35;
+          const val = Math.max(8, Math.min(255, wave1 + wave2));
+          this.freqData[i] = val;
+        } else {
+          this.freqData[i] = Math.max(2, this.freqData[i] * 0.9);
+        }
+      }
+    }
+
+    const barCount = 28;
+    const gap = 3;
+    const totalGap = gap * (barCount - 1);
+    const barWidth = Math.max(2, (w - totalGap) / barCount);
+
     const grad = ctx.createLinearGradient(0, h, 0, 0);
-    grad.addColorStop(0, '#e11d48');
-    grad.addColorStop(0.6, '#f43f5e');
-    grad.addColorStop(1, '#fb7185');
+    grad.addColorStop(0, '#ff3366');
+    grad.addColorStop(0.6, '#fb7185');
+    grad.addColorStop(1, '#ffedd5');
 
     ctx.fillStyle = grad;
 
     for (let i = 0; i < barCount; i++) {
-      let val = this.freqData[i % this.freqData.length] / 255;
-      if (!isPlaying) {
-        val = 0.08 + Math.sin(this.time * 2 + i * 0.25) * 0.05;
-      }
-
-      const barHeight = Math.max(3, val * (h - 6));
+      const dataIdx = Math.floor((i / barCount) * (this.freqData.length / 2));
+      const val = this.freqData[dataIdx] || 4;
+      const barHeight = Math.max(3, (val / 255) * h);
       const x = i * (barWidth + gap);
       const y = h - barHeight;
 
       ctx.beginPath();
-      if (ctx.roundRect) {
-        ctx.roundRect(x, y, barWidth, barHeight, [barWidth / 2, barWidth / 2, 0, 0]);
+      if (typeof ctx.roundRect === 'function') {
+        ctx.roundRect(x, y, barWidth, barHeight, [2, 2, 0, 0]);
       } else {
         ctx.rect(x, y, barWidth, barHeight);
       }
       ctx.fill();
     }
 
-    requestAnimationFrame(this.loop);
+    requestAnimationFrame(this.draw);
+  }
+
+  // PURPOSE: Stops spectrum render loop and cleans up event listeners.
+  destroy() {
+    this.running = false;
+    window.removeEventListener('resize', this.resize);
   }
 }

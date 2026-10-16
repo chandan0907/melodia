@@ -1,0 +1,280 @@
+/* ==========================================================================
+   STUDIO PLAYER STYLES (MINI DOCK & FULL MODAL)
+   RESPONSIBILITY: Persistent floating mini dock, vinyl spinning animations,
+   master studio player modal layout, and real-time spectrum canvas.
+   ========================================================================== */
+
+/* ------------------------------------------------ Universal Floating Mini Player Dock */
+.mini-player-dock {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 95;
+  width: min(840px, calc(100% - 40px));
+  height: 68px;
+  border-radius: 999px;
+  background: rgba(18, 14, 25, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), var(--glass-highlight);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 0 12px;
+  transition: all 0.4s var(--ease-spring);
+}
+
+.dock-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
+}
+
+.dock-vinyl {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.dock-vinyl img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dock-vinyl.spinning {
+  animation: vinylSpin 6s linear infinite;
+}
+
+@keyframes vinylSpin {
+  to { transform: rotate(360deg); }
+}
+
+.dock-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dock-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dock-artist {
+  font-size: 0.74rem;
+  color: var(--text-mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Spectrum Mini Canvas */
+.dock-visualizer {
+  width: 130px;
+  height: 32px;
+  margin: 0 16px;
+  flex-shrink: 0;
+}
+
+.dock-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.btn-dock-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.2s, transform 0.2s;
+}
+
+.btn-dock-icon:hover {
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.btn-dock-play {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e11d48, #be123c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 4px 16px var(--accent-glow);
+  transition: transform 0.2s var(--ease-spring), box-shadow 0.2s;
+}
+
+.btn-dock-play:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 24px rgba(225, 29, 72, 0.6);
+}
+
+.btn-dock-expand {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-mute);
+  margin-left: 6px;
+  transition: all 0.2s;
+}
+
+.btn-dock-expand:hover {
+  color: #ffffff;
+  border-color: var(--glass-border-hover);
+  background: var(--glass-bg-hover);
+}
+
+/* ------------------------------------------------ Full Master Player Layout */
+.full-player-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 36px;
+  align-items: center;
+}
+
+.player-vinyl-stage {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.big-vinyl {
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 0 20%, #0d0a13 20% 21%, transparent 21%),
+              repeating-radial-gradient(circle, #0b0910 0 2px, #1a1524 2px 4px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 0 0 2px rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.big-vinyl.playing {
+  animation: vinylSpin 7s linear infinite;
+}
+
+.big-vinyl-center {
+  width: 105px;
+  height: 105px;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+.big-vinyl-center img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.player-details-stage {
+  display: flex;
+  flex-direction: column;
+}
+
+.player-progress-bar {
+  width: 100%;
+  height: 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 16px 0 8px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.player-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #e11d48, #f43f5e);
+  border-radius: 6px;
+  transition: width 0.25s linear;
+}
+
+.player-time-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+.player-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24px;
+}
+
+/* Playlist Quick Switch Pills */
+.btn-playlist-pill {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-mute);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-smooth);
+}
+
+.btn-playlist-pill:hover {
+  background: var(--glass-bg-hover);
+  color: #ffffff;
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+}
+
+.btn-playlist-pill.active {
+  background: rgba(225, 29, 72, 0.22);
+  border-color: #e11d48;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(225, 29, 72, 0.4);
+}
+
+@media (max-width: 768px) {
+  .full-player-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .big-vinyl {
+    width: 200px;
+    height: 200px;
+  }
+  .dock-visualizer {
+    display: none;
+  }
+}
