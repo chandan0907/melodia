@@ -62,8 +62,8 @@ export const RECORDS = [
     year: '2026',
     genre: 'Cinematic Ambient / R&B',
     cover: './assets/images/album_love.jpg',
-    accentColor: '#e11d48',
-    glowColor: 'rgba(225, 29, 72, 0.45)',
+    accentColor: '#8c9e3b',
+    glowColor: 'rgba(188, 214, 67, 0.45)',
     description: 'A velvet twilight journey blending tape-saturated vocals, atmospheric Rhodes chords, and hypnotic subsonic grooves.',
     tracks: [
       { id: 'love-1', title: 'Crimson Sky', duration: '3:42', ytId: '2Vv-BfVoq4g', tempo: 74, key: 'Cm' },
@@ -179,7 +179,7 @@ export const PLAYLISTS = [
     name: 'Awarapan 2 (All Songs)',
     mood: 'Soulful · Melancholic · Raw',
     description: 'Toh Phir Aao, Tera Mera Rishta, Mera Piya Ghar Aaya, Tumhare Liye.',
-    colors: ['#eab308', '#e11d48', '#881337'],
+    colors: ['#a8bf3f', '#445625', '#1d2411'],
     spotifyUrl: 'https://open.spotify.com/playlist/0qRsizDqcvjuBkpbLZkL69?si=596dc0215bb648f1',
     spotifyEmbedUrl: 'https://open.spotify.com/embed/playlist/0qRsizDqcvjuBkpbLZkL69?utm_source=generator&theme=0',
     tracks: [

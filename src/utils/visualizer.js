@@ -2,6 +2,7 @@
 // INTEGRATION: Listens to AudioEngine state to dynamically adjust particle agitation and frequency spectrum bars.
 // INPUT: Target HTML5 Canvas element IDs and frequency audio data.
 // OUTPUT: 60 FPS GPU-accelerated canvas animations with fluid mouse parallax.
+// THEME: Pullman Green & Icky Green Holographic Studio Palette.
 
 import { audio } from '../services/audio-service.js';
 
@@ -14,7 +15,7 @@ export class BackgroundAtmosphere {
     if (!this.canvas) return;
     this.ctx = this.canvas.getContext('2d');
     this.particles = [];
-    this.numParticles = 45;
+    this.numParticles = 48;
     this.mouse = {
       x: window.innerWidth / 2,
       y: window.innerHeight / 2,
@@ -43,14 +44,15 @@ export class BackgroundAtmosphere {
       }
     }, { passive: true });
 
-    // Curated studio palette: Deep wine red, crimson embers, peach glow, and subtle cyan depth
+    // Curated Pullman Green & Icky Green Studio Palette
     const colors = [
-      { r: 225, g: 29, b: 72 },   // Crimson
-      { r: 180, g: 18, b: 60 },   // Deep burgundy
-      { r: 244, g: 63, b: 94 },   // Rose
-      { r: 251, g: 113, b: 133 }, // Peach glow
-      { r: 147, g: 51, b: 234 },  // Violet accent
-      { r: 56, g: 189, b: 248 }   // Soft cyan mist
+      { r: 35, g: 45, b: 20 },   // Deep Pullman green
+      { r: 55, g: 68, b: 28 },   // Mid Pullman olive
+      { r: 95, g: 116, b: 44 },  // Murky moss green
+      { r: 140, g: 158, b: 59 }, // Icky green base
+      { r: 168, g: 191, b: 63 }, // Vibrant Icky green
+      { r: 188, g: 214, b: 67 }, // Acid Icky green glow
+      { r: 214, g: 242, b: 85 }  // Luminous highlight
     ];
 
     for (let i = 0; i < this.numParticles; i++) {
@@ -58,12 +60,12 @@ export class BackgroundAtmosphere {
       this.particles.push({
         x: Math.random() * (this.canvas.width || window.innerWidth),
         y: Math.random() * (this.canvas.height || window.innerHeight),
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.35,
-        radius: Math.random() * 90 + 35,
-        baseRadius: Math.random() * 90 + 35,
+        vx: (Math.random() - 0.5) * 0.45,
+        vy: (Math.random() - 0.5) * 0.38,
+        radius: Math.random() * 95 + 40,
+        baseRadius: Math.random() * 95 + 40,
         color: c,
-        alpha: Math.random() * 0.28 + 0.08,
+        alpha: Math.random() * 0.32 + 0.09,
         pulseSpeed: Math.random() * 0.02 + 0.008,
         offset: Math.random() * Math.PI * 2
       });
@@ -109,7 +111,7 @@ export class BackgroundAtmosphere {
 
     // Dynamic boost when audio is actively playing
     const audioState = audio.getState();
-    const boost = audioState.isPlaying ? 1.35 : 1.0;
+    const boost = audioState.isPlaying ? 1.4 : 1.0;
 
     this.particles.forEach((p) => {
       p.x += p.vx;
@@ -121,10 +123,10 @@ export class BackgroundAtmosphere {
       if (p.y < -margin) p.y = h + margin;
       if (p.y > h + margin) p.y = -margin;
 
-      const dx = (this.mouse.x - w / 2) * 0.02;
-      const dy = (this.mouse.y - h / 2) * 0.02;
+      const dx = (this.mouse.x - w / 2) * 0.025;
+      const dy = (this.mouse.y - h / 2) * 0.025;
 
-      const currentRadius = p.baseRadius * (1 + Math.sin(this.time * 2 + p.offset) * 0.18) * boost;
+      const currentRadius = p.baseRadius * (1 + Math.sin(this.time * 2 + p.offset) * 0.2) * boost;
       const currentAlpha = p.alpha * (0.8 + Math.sin(this.time * 1.5 + p.offset) * 0.2) * boost;
 
       const grad = ctx.createRadialGradient(
@@ -132,7 +134,7 @@ export class BackgroundAtmosphere {
         p.x + dx, p.y + dy, currentRadius
       );
       grad.addColorStop(0, `rgba(${p.color.r}, ${p.color.g}, ${p.color.b}, ${currentAlpha})`);
-      grad.addColorStop(0.5, `rgba(${p.color.r}, ${p.color.g}, ${p.color.b}, ${currentAlpha * 0.4})`);
+      grad.addColorStop(0.45, `rgba(${p.color.r}, ${p.color.g}, ${p.color.b}, ${currentAlpha * 0.45})`);
       grad.addColorStop(1, `rgba(${p.color.r}, ${p.color.g}, ${p.color.b}, 0)`);
 
       ctx.fillStyle = grad;
@@ -141,11 +143,14 @@ export class BackgroundAtmosphere {
       ctx.fill();
     });
 
-    // Dark vignette layer overlay
-    const vig = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.25, w / 2, h / 2, Math.max(w, h) * 0.85);
-    vig.addColorStop(0, 'rgba(7, 6, 10, 0)');
-    vig.addColorStop(0.7, 'rgba(7, 6, 10, 0.4)');
-    vig.addColorStop(1, 'rgba(7, 6, 10, 0.88)');
+    // Dark Pullman green vignette layer overlay
+    const vig = ctx.createRadialGradient(
+      w / 2, h / 2, Math.min(w, h) * 0.25,
+      w / 2, h / 2, Math.max(w, h) * 0.88
+    );
+    vig.addColorStop(0, 'rgba(15, 19, 10, 0)');
+    vig.addColorStop(0.65, 'rgba(15, 19, 10, 0.48)');
+    vig.addColorStop(1, 'rgba(7, 9, 4, 0.94)');
     ctx.fillStyle = vig;
     ctx.fillRect(0, 0, w, h);
 
@@ -161,7 +166,7 @@ export class BackgroundAtmosphere {
 }
 
 /**
- * SpectrumVisualizer renders audio frequency bars with neon gradient fills.
+ * SpectrumVisualizer renders audio frequency bars with Pullman & Icky Green gradient fills.
  */
 export class SpectrumVisualizer {
   constructor(canvasId) {
@@ -200,7 +205,7 @@ export class SpectrumVisualizer {
     }
   }
 
-  // PURPOSE: Renders animated vertical equalizer frequency bars.
+  // PURPOSE: Renders animated vertical equalizer frequency bars with Pullman to Icky Green gradient.
   draw() {
     if (!this.running || !this.ctx) return;
     this.time += 0.08;
@@ -214,7 +219,6 @@ export class SpectrumVisualizer {
     const audioState = audio.getState();
     const isPlaying = audioState.isPlaying;
 
-    // Use Web Audio analyser data when available; otherwise use harmonic synthesis simulation
     if (audio.analyser && isPlaying) {
       audio.analyser.getByteFrequencyData(this.freqData);
     } else {
@@ -235,10 +239,12 @@ export class SpectrumVisualizer {
     const totalGap = gap * (barCount - 1);
     const barWidth = Math.max(2, (w - totalGap) / barCount);
 
+    // Pullman Green to Icky Green Gradient with Acid highlight tip
     const grad = ctx.createLinearGradient(0, h, 0, 0);
-    grad.addColorStop(0, '#ff3366');
-    grad.addColorStop(0.6, '#fb7185');
-    grad.addColorStop(1, '#ffedd5');
+    grad.addColorStop(0, '#2e3b1a');    // Deep Pullman green
+    grad.addColorStop(0.45, '#5f742c'); // Murky moss
+    grad.addColorStop(0.8, '#a8bf3f');  // Vibrant Icky green
+    grad.addColorStop(1, '#bcd643');    // Acid Icky green tip
 
     ctx.fillStyle = grad;
 

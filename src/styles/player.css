@@ -14,9 +14,9 @@
   width: min(840px, calc(100% - 40px));
   height: 68px;
   border-radius: 999px;
-  background: rgba(18, 14, 25, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), var(--glass-highlight);
+  background: rgba(15, 19, 10, 0.82);
+  border: 1px solid rgba(188, 214, 67, 0.18);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(188, 214, 67, 0.08);
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
   display: flex;
@@ -117,18 +117,18 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #e11d48, #be123c);
+  background: linear-gradient(135deg, #445625, #8c9e3b, #bcd643);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  box-shadow: 0 4px 16px var(--accent-glow);
+  color: #0f130a;
+  box-shadow: 0 4px 18px var(--accent-neon-glow);
   transition: transform 0.2s var(--ease-spring), box-shadow 0.2s;
 }
 
 .btn-dock-play:hover {
   transform: scale(1.08);
-  box-shadow: 0 8px 24px rgba(225, 29, 72, 0.6);
+  box-shadow: 0 8px 26px var(--accent-electric-glow);
 }
 
 .btn-dock-expand {
@@ -171,8 +171,8 @@
   width: 260px;
   height: 260px;
   border-radius: 50%;
-  background: radial-gradient(circle, transparent 0 20%, #0d0a13 20% 21%, transparent 21%),
-              repeating-radial-gradient(circle, #0b0910 0 2px, #1a1524 2px 4px);
+  background: radial-gradient(circle, transparent 0 20%, #0c0f08 20% 21%, transparent 21%),
+              repeating-radial-gradient(circle, #0a0d06 0 2px, #1a2310 2px 4px);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 0 0 2px rgba(255, 255, 255, 0.05);
   display: flex;
   align-items: center;
@@ -218,7 +218,8 @@
 .player-progress-fill {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, #e11d48, #f43f5e);
+  background: linear-gradient(90deg, #445625, #8c9e3b, #bcd643);
+  box-shadow: 0 0 10px rgba(188, 214, 67, 0.6);
   border-radius: 6px;
   transition: width 0.25s linear;
 }
@@ -259,10 +260,10 @@
 }
 
 .btn-playlist-pill.active {
-  background: rgba(225, 29, 72, 0.22);
-  border-color: #e11d48;
+  background: rgba(188, 214, 67, 0.2);
+  border-color: #bcd643;
   color: #ffffff;
-  box-shadow: 0 0 12px rgba(225, 29, 72, 0.4);
+  box-shadow: 0 0 14px rgba(188, 214, 67, 0.4);
 }
 
 @media (max-width: 768px) {

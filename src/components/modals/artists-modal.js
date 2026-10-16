@@ -28,7 +28,7 @@ function createArtistRosterCard(artist) {
   });
 
   const role = createElement('p', {
-    attrs: { style: 'color: #fb7185; font-size:0.85rem; font-weight:600;' },
+    attrs: { style: 'color: #bcd643; font-size:0.85rem; font-weight:600;' },
     text: artist.role
   });
 

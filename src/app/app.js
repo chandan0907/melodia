@@ -402,7 +402,7 @@ export class MelodiaApp {
     const modalVolIconHigh = document.getElementById('modal-vol-icon-high');
     const modalVolIconMuted = document.getElementById('modal-vol-icon-muted');
 
-    const sliderGradient = (pct) => `linear-gradient(90deg, #ff3366 0%, #fb7185 ${pct}%, rgba(255, 255, 255, 0.12) ${pct}%, rgba(255, 255, 255, 0.12) 100%)`;
+    const sliderGradient = (pct) => `linear-gradient(90deg, #2e3b1a 0%, #8c9e3b ${pct * 0.7}%, #bcd643 ${pct}%, rgba(255, 255, 255, 0.12) ${pct}%, rgba(255, 255, 255, 0.12) 100%)`;
 
     if (dockVolSlider && document.activeElement !== dockVolSlider) {
       dockVolSlider.value = volPct;

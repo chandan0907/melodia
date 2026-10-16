@@ -26,7 +26,7 @@ function createRecordCard(rec, onSelectRecord) {
   const artist = createElement('p', { text: rec.artist });
 
   const metaSpan = createElement('span', {
-    attrs: { style: 'font-size:0.75rem; color: #ff3366; font-weight:600;' },
+    attrs: { style: 'font-size:0.75rem; color: #bcd643; font-weight:600;' },
     text: `▶ ${rec.tracks ? rec.tracks.length : 0} Master Tracks · ${rec.genre || 'Master Tape'}`
   });
 

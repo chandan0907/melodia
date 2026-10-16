@@ -2,46 +2,62 @@
    DESIGN TOKENS & SYSTEM VARIABLES
    RESPONSIBILITY: Color palette, typography tokens, glassmorphism layers,
    easing curves, and spacing metrics across the entire application.
+   THEME: Pullman Green & Icky Green Holographic Glassmorphic Studio.
    ========================================================================== */
 
 :root {
-  /* Surface & Background Dark Layers */
-  --bg-deep: #07060a;
-  --bg-surface: #0e0b14;
-  --bg-card: rgba(22, 17, 30, 0.55);
+  /* ---------------- Surface & Background Dark Layers (Pullman Green Matrix) */
+  --bg-deep: #0f130a;
+  --bg-surface: #151a0e;
+  --bg-card: rgba(26, 34, 16, 0.58);
+  --bg-card-hover: rgba(35, 46, 22, 0.72);
+  --bg-elevated: rgba(43, 56, 26, 0.85);
 
-  /* Primary Brand Accent Palette */
-  --accent-crimson: #e11d48;
-  --accent-rose: #f43f5e;
-  --accent-ruby: #be123c;
-  --accent-peach: #fb7185;
-  --accent-fire: #f97316;
-  --accent-glow: rgba(225, 29, 72, 0.45);
+  /* ---------------- Pullman Green & Icky Green Accent Spectrum */
+  --color-pullman-deep: #1d2411;
+  --color-pullman-base: #2e3b1a;
+  --color-pullman-light: #445625;
+  --color-murky-moss: #5f742c;
+  --color-icky-base: #8c9e3b;
+  --color-icky-bright: #a8bf3f;
+  --color-icky-acid: #bcd643;
+  --color-icky-glow: #cff04d;
+  --color-icky-light: #f1fccb;
 
-  /* Glassmorphism System */
-  --glass-bg: rgba(255, 255, 255, 0.038);
-  --glass-bg-hover: rgba(255, 255, 255, 0.075);
+  /* ---------------- Luminous Icky Green Glow Layers */
+  --accent-glow: rgba(140, 158, 59, 0.42);
+  --accent-icky-glow: rgba(168, 191, 63, 0.55);
+  --accent-acid-glow: rgba(188, 214, 67, 0.7);
+  --accent-pullman-glow: rgba(46, 59, 26, 0.5);
+
+  /* ---------------- Clean Frosted Glassmorphism System */
+  --glass-bg: rgba(255, 255, 255, 0.035);
+  --glass-bg-hover: rgba(168, 191, 63, 0.08);
   --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-border-hover: rgba(255, 255, 255, 0.22);
-  --glass-highlight: inset 0 1px 1px rgba(255, 255, 255, 0.14);
+  --glass-border-hover: rgba(168, 191, 63, 0.4);
+  --glass-border-active: rgba(188, 214, 67, 0.65);
+  --glass-highlight: inset 0 1px 1px rgba(255, 255, 255, 0.18), inset 0 0 20px rgba(168, 191, 63, 0.04);
+  --glass-blur: blur(28px) saturate(185%);
 
-  /* Text & Foreground Hierarchy */
-  --text-main: #f9f8fc;
-  --text-mute: #9e96b3;
-  --text-faint: rgba(249, 248, 252, 0.38);
+  /* ---------------- Typography & Foreground Hierarchy */
+  --text-main: #f5fae8;
+  --text-sub: #dbe8be;
+  --text-mute: #99a87d;
+  --text-faint: rgba(245, 250, 232, 0.35);
 
-  /* Typography Scales */
+  /* ---------------- Typography Scales */
   --font-display: 'Syne', 'Sora', sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
 
-  /* Layout Metrics */
+  /* ---------------- Layout Metrics & Border Radii */
   --nav-height: 84px;
-  --radius-small: 8px;
-  --radius-medium: 16px;
-  --radius-large: 24px;
+  --radius-small: 10px;
+  --radius-medium: 18px;
+  --radius-large: 28px;
   --radius-pill: 9999px;
 
-  /* Fluid Animation & Easing Curves */
-  --ease-spring: cubic-bezier(0.19, 1, 0.22, 1);
+  /* ---------------- Kinetic Animation & Physics */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
