@@ -1,33 +1,36 @@
 /* ==========================================================================
-   LAYOUT, NAVIGATION & SHELL STYLES
-   RESPONSIBILITY: Top glassmorphic header, left/right rails, viewport snap
-   container, screen sections, and bottom mobile navigation bar.
-   THEME: Olive Green to Neon Green Holographic Studio.
+   LAYOUT, NAVIGATION & SHELL STYLES (REDESIGNED)
+   RESPONSIBILITY: Floating glass header, modern continuous page layout,
+   mobile bottom navigation, and zero-clutter clean shell.
+   THEME: Pullman Green & Icky Green Holographic Glassmorphic Studio.
    ========================================================================== */
 
-/* ------------------------------------------------ Top Glassmorphic Header */
+/* ------------------------------------------------ Top Floating Glass Header */
 .app-header {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: var(--nav-height);
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1200px, calc(100% - 32px));
+  height: 64px;
+  border-radius: var(--radius-pill);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 44px;
+  padding: 0 24px;
   z-index: 100;
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  background: linear-gradient(180deg, rgba(5, 11, 4, 0.85) 0%, rgba(5, 11, 4, 0.45) 80%, transparent 100%);
-  border-bottom: 1px solid var(--glass-border);
+  background: rgba(15, 19, 10, 0.82);
+  border: 1px solid rgba(188, 214, 67, 0.18);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   transition: all 0.4s var(--ease-smooth);
 }
 
 .brand-logo {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   cursor: pointer;
   user-select: none;
   transition: transform 0.3s var(--ease-spring);
@@ -38,30 +41,30 @@
 }
 
 .logo-icon {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #86efac, #22c55e 55%, #14532d);
+  background: radial-gradient(circle at 35% 35%, #8c9e3b, #445625 55%, #1d2411);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 24px var(--accent-neon-glow);
+  box-shadow: 0 0 18px var(--accent-neon-glow);
   position: relative;
   transition: transform 0.45s var(--ease-spring), box-shadow 0.45s;
 }
 
 .logo-icon::after {
   content: '';
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: var(--bg-deep);
-  border: 2px solid rgba(163, 230, 53, 0.4);
+  background: #bcd643;
+  box-shadow: 0 0 10px #cff04d;
 }
 
 .brand-logo:hover .logo-icon {
   transform: scale(1.1) rotate(25deg);
-  box-shadow: 0 0 35px var(--accent-electric-glow);
+  box-shadow: 0 0 30px var(--accent-electric-glow);
 }
 
 .brand-text {
@@ -72,82 +75,71 @@
 .brand-title {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   letter-spacing: 0.18em;
   color: #ffffff;
   line-height: 1;
 }
 
 .brand-sub {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.32em;
-  color: var(--accent-lime);
+  color: var(--color-icky-acid);
   text-transform: uppercase;
   margin-top: 3px;
-  text-shadow: 0 0 12px rgba(74, 222, 128, 0.4);
+  text-shadow: 0 0 12px rgba(188, 214, 67, 0.4);
 }
 
 /* ------------------------------------------------ Nav Links */
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 36px;
+  gap: 16px;
   list-style: none;
 }
 
 .nav-item a {
-  font-size: 0.92rem;
+  font-size: 0.84rem;
   font-weight: 500;
-  letter-spacing: 0.06em;
-  color: rgba(244, 251, 242, 0.65);
-  transition: color 0.25s, text-shadow 0.25s, transform 0.25s;
+  letter-spacing: 0.08em;
+  color: var(--text-mute);
+  transition: all 0.25s var(--ease-smooth);
   position: relative;
-  padding: 6px 0;
+  padding: 6px 14px;
+  border-radius: 999px;
   display: inline-block;
 }
 
 .nav-item a:hover {
   color: #ffffff;
-  transform: translateY(-1px);
+  background: rgba(188, 214, 67, 0.08);
 }
 
-/* Active Neon Green Navigation State */
+/* Active Navigation Pill State */
 .nav-item.active a {
-  color: var(--accent-electric);
-  font-weight: 600;
-  text-shadow: 0 0 16px rgba(163, 230, 53, 0.65);
-}
-
-.nav-item.active a::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, #22c55e, #a3e635);
-  box-shadow: 0 0 10px #4ade80;
-  animation: shimmerBorder 2.5s infinite ease-in-out;
+  color: #0f130a;
+  background: linear-gradient(135deg, #a8bf3f, #bcd643);
+  font-weight: 700;
+  box-shadow: 0 2px 14px rgba(188, 214, 67, 0.45);
 }
 
 .nav-actions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 
 .btn-app-install {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 18px;
+  padding: 7px 16px;
   border-radius: var(--radius-pill);
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-highlight);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--text-main);
@@ -158,136 +150,62 @@
 .btn-app-install:hover {
   background: var(--glass-bg-hover);
   border-color: var(--glass-border-hover);
-  color: var(--accent-chartreuse);
+  color: var(--color-icky-light);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px var(--accent-glow);
 }
 
 .btn-header-sync {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent-lime);
+  color: var(--color-icky-acid);
   transition: all 0.3s var(--ease-spring);
 }
 
 .btn-header-sync:hover {
   color: #ffffff;
-  border-color: var(--accent-electric);
-  background: rgba(34, 197, 94, 0.2);
+  border-color: var(--color-icky-acid);
+  background: rgba(188, 214, 67, 0.2);
   transform: scale(1.1) rotate(15deg);
   box-shadow: 0 0 20px var(--accent-neon-glow);
 }
 
-/* ------------------------------------------------ Rails (Left / Right) */
-/* Left Slide Tracker */
-.rail-left {
-  position: fixed;
-  left: 44px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 80;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-
-.indicator-line {
-  width: 2px;
-  height: 52px;
-  background: rgba(255, 255, 255, 0.1);
-  position: relative;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.indicator-line-fill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 25%;
-  background: linear-gradient(180deg, var(--accent-neon), var(--accent-electric));
-  box-shadow: 0 0 12px var(--accent-neon);
-  transition: height 0.5s var(--ease-spring);
-}
-
-.indicator-text {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  font-size: 0.78rem;
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: 0.25em;
-  color: rgba(244, 251, 242, 0.5);
-}
-
-.indicator-text span {
-  color: var(--accent-electric);
-  text-shadow: 0 0 10px rgba(163, 230, 53, 0.5);
-}
-
-/* Right Social Links Rail */
+/* ------------------------------------------------ Hidden Rails (Uncluttered View) */
+.rail-left,
 .rail-right {
-  position: fixed;
-  right: 44px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 80;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 22px;
+  display: none !important;
 }
 
-.social-link {
-  color: rgba(244, 251, 242, 0.45);
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.25s var(--ease-spring);
-  padding: 6px;
-  border-radius: 50%;
-}
-
-.social-link:hover {
-  color: var(--accent-electric);
-  transform: scale(1.25) translateY(-2px);
-  filter: drop-shadow(0 0 8px var(--accent-neon-glow));
-}
-
-/* ------------------------------------------------ Viewport Presentation Container */
+/* ------------------------------------------------ Modern Natural Page Flow Container */
 .snap-container {
   position: relative;
   z-index: 10;
   width: 100%;
-  height: 100vh;
-  overflow-y: scroll;
-  scroll-snap-type: y mandatory;
+  min-height: 100vh;
+  overflow-x: hidden;
   scroll-behavior: smooth;
+  padding-bottom: 120px;
 }
 
 .screen-section {
   position: relative;
   width: 100%;
-  min-height: 100vh;
-  height: 100vh;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
+  min-height: 85vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: calc(var(--nav-height) + 20px) 90px 100px;
+  padding: calc(var(--nav-height) + 30px) 24px 80px;
   box-sizing: border-box;
   text-align: center;
+  max-width: 1240px;
+  margin: 0 auto;
 }
 
 /* ------------------------------------------------ Mobile Bottom Navigation Bar */
@@ -298,7 +216,7 @@
   left: 0;
   right: 0;
   height: 64px;
-  background: rgba(9, 19, 7, 0.88);
+  background: rgba(15, 19, 10, 0.92);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-top: 1px solid var(--glass-border);
@@ -324,17 +242,16 @@
 
 .mobile-nav-item.active,
 .mobile-nav-item:hover {
-  color: var(--accent-electric);
+  color: var(--color-icky-acid);
   transform: translateY(-2px);
-  text-shadow: 0 0 10px rgba(163, 230, 53, 0.5);
+  text-shadow: 0 0 10px rgba(188, 214, 67, 0.5);
 }
 
 @media (max-width: 900px) {
-  .rail-left, .rail-right {
-    display: none;
-  }
   .app-header {
-    padding: 0 20px;
+    top: 8px;
+    width: calc(100% - 20px);
+    padding: 0 16px;
   }
   .nav-links {
     display: none;
@@ -343,6 +260,7 @@
     display: flex;
   }
   .screen-section {
-    padding: calc(var(--nav-height) + 10px) 20px 84px;
+    padding: calc(var(--nav-height) + 20px) 16px 84px;
+    min-height: auto;
   }
 }

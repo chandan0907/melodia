@@ -86,7 +86,22 @@ export class MelodiaApp {
     // 6. Main Viewport Scroll Snap Container & Sections
     const heroSection = createHeroSection({
       onExploreRecords: () => router.scrollToSection('records'),
-      onOpenPlayer: () => this.openModal('modal-player')
+      onOpenPlayer: () => this.openModal('modal-player'),
+      onPlaySpotlight: () => {
+        audio.ensureAudioContext();
+        sync.selectRecord('awarapan-2', 0);
+        this.showToast('Playing Toh Phir Aao from Awarapan 2');
+      },
+      onStartRoom: async () => {
+        audio.ensureAudioContext();
+        try {
+          await sync.createRoom();
+          this.openModal('modal-player');
+          this.showToast(`🎉 Room ${sync.roomId} created! Link ready.`);
+        } catch (e) {
+          this.openModal('modal-player');
+        }
+      }
     });
 
     const recordsSection = createRecordsSection({
@@ -355,6 +370,10 @@ export class MelodiaApp {
     if (dockArtist) dockArtist.textContent = track.artist || 'Beat Records';
     if (dockCover) dockCover.src = track.cover || './assets/images/album_love.jpg';
     if (dockVinyl) dockVinyl.classList.toggle('spinning', isPlaying);
+
+    // Hero Turntable Element
+    const heroVinyl = document.getElementById('hero-vinyl-disc');
+    if (heroVinyl) heroVinyl.classList.toggle('spinning', isPlaying);
 
     if (dockPlayIco && dockPauseIco) {
       dockPlayIco.style.display = isPlaying ? 'none' : 'block';

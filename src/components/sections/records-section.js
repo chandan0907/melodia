@@ -1,20 +1,35 @@
-// PURPOSE: Programmatically constructs the Records & Featured Discography section.
-// INTEGRATION: Features 3D tilt album covers that trigger studio playback, discography modal trigger,
-// and the Spotify Featured Spotlight bar with OAuth connect and embedded web player.
+// PURPOSE: Programmatically constructs the redesigned Records & Featured Discography section.
+// INTEGRATION: Features an interactive 4-album glass grid with sliding vinyl hover physics,
+// studio playback triggers, discography modal launcher, and the Spotify Spotlight console.
 // INPUT: Album selection callbacks, Spotify login trigger, and embed toggling.
-// OUTPUT: Semantic HTMLElement (<section id="records" class="screen-section">).
+// OUTPUT: Semantic HTMLElement (<section id="records" class="screen-section records-section">).
 
 import { createElement, createSvg, createSvgPath } from '../common/dom.js';
 
 /**
- * Creates an individual 3D album cover showcase card.
+ * Creates an individual interactive glass album card with a sliding vinyl record.
  * @param {Object} record - Record data object
- * @param {string} positionClass - 'card-side-left' | 'card-center' | 'card-side-right'
  * @param {Function} [onPlay] - Play callback
  * @returns {HTMLElement} The record card element
  */
-function createRecordCoverCard(record, positionClass, onPlay) {
-  const img = createElement('img', {
+function createInteractiveRecordCard(record, onPlay) {
+  // 1. Vinyl disc that slides out from behind the sleeve on hover
+  const vinylGroove = createElement('div', {
+    className: 'album-vinyl-groove',
+    children: [
+      createElement('div', {
+        className: 'album-vinyl-label',
+        children: [
+          createElement('img', {
+            attrs: { src: record.cover, alt: `${record.title} Label`, loading: 'lazy' }
+          })
+        ]
+      })
+    ]
+  });
+
+  // 2. Sleeve Jacket Cover
+  const sleeveImg = createElement('img', {
     attrs: {
       src: record.cover,
       alt: `${record.title} Album Cover`,
@@ -23,30 +38,56 @@ function createRecordCoverCard(record, positionClass, onPlay) {
   });
 
   const playSvg = createSvg('svg', {
-    attrs: { viewBox: '0 0 24 24', width: positionClass === 'card-center' ? '28' : '26', height: positionClass === 'card-center' ? '28' : '26', fill: '#fff' },
+    attrs: { viewBox: '0 0 24 24', width: '24', height: '24', fill: '#0f130a' },
     children: [createSvgPath('M8 5v14l11-7z')]
   });
 
-  const ringStyle = positionClass === 'card-center'
-    ? 'background: linear-gradient(135deg, #1ed760, #15803d); box-shadow: 0 8px 25px rgba(30, 215, 96, 0.6);'
-    : '';
-
   const playRing = createElement('div', {
-    className: 'play-ring-btn',
-    attrs: ringStyle ? { style: ringStyle } : {},
+    className: 'card-play-ring',
+    attrs: { title: `Play ${record.title}` },
     children: [playSvg]
   });
 
-  const overlay = createElement('div', {
-    className: 'record-play-overlay',
-    children: [playRing]
+  const sleeveCover = createElement('div', {
+    className: 'album-sleeve-jacket',
+    children: [sleeveImg, playRing]
+  });
+
+  // 3. Album Meta Information
+  const genreTag = createElement('span', {
+    className: 'album-card-genre',
+    text: record.genre
+  });
+
+  const albumTitle = createElement('h3', {
+    className: 'album-card-title',
+    text: record.title
+  });
+
+  const albumArtist = createElement('p', {
+    className: 'album-card-artist',
+    text: record.artist
+  });
+
+  const tracksCount = createElement('span', {
+    className: 'album-card-tracks',
+    text: `▶ ${record.tracks ? record.tracks.length : 4} Tracks`
+  });
+
+  const footerRow = createElement('div', {
+    className: 'album-card-footer',
+    children: [genreTag, tracksCount]
+  });
+
+  const metaBox = createElement('div', {
+    className: 'album-card-meta',
+    children: [albumTitle, albumArtist, footerRow]
   });
 
   return createElement('div', {
-    className: `record-cover-card ${positionClass} tilt-card`,
+    className: 'interactive-album-card tilt-card',
     dataset: { playAlbum: record.id },
-    attrs: { title: `Play ${record.title}` },
-    children: [img, overlay],
+    children: [vinylGroove, sleeveCover, metaBox],
     events: {
       click: () => {
         if (typeof onPlay === 'function') onPlay(record.id);
@@ -185,32 +226,70 @@ function createSpotifySpotlightBar(handlers = {}) {
  * @returns {HTMLElement} The records section element
  */
 export function createRecordsSection(handlers = {}) {
-  // 1. Showcase row of 4 albums
-  const albums = [
-    { id: 'imagination', title: 'IMAGINATION', cover: './assets/images/album_imagination.jpg', pos: 'card-side-left' },
-    { id: 'awarapan-2', title: 'Awarapan 2 (Spotify Featured)', cover: './assets/images/album_awarapan.jpg', pos: 'card-center' },
-    { id: 'love', title: 'LOVE', cover: './assets/images/album_love.jpg', pos: 'card-side-right' },
-    { id: 'dreamer', title: 'DREAMER', cover: './assets/images/album_dreamer.jpg', pos: 'card-side-right' }
-  ];
-
-  const showcaseCards = albums.map((alb) =>
-    createRecordCoverCard(alb, alb.pos, handlers.onPlayAlbum)
-  );
-
-  const showcaseRow = createElement('div', {
-    className: 'showcase-row',
-    children: showcaseCards
+  // 1. Section Headings
+  const tagPill = createElement('div', {
+    className: 'section-category-pill',
+    text: '// MASTER DISCOGRAPHY'
   });
 
-  // 2. Section Headings
   const labelTitle = createElement('h2', {
     className: 'section-label-title',
-    text: 'RECORDS'
+    text: 'STUDIO RELEASES'
   });
 
   const summary = createElement('p', {
     className: 'section-summary-text',
-    text: 'Exclusive master tape cuts, analog pressings, and chart-topping productions crafted within our custom acoustic chambers.'
+    text: 'Direct transfers from 2-inch multi-track master tapes. Tap any album to play immediately in studio fidelity or preview the sliding vinyl.'
+  });
+
+  const headerGroup = createElement('div', {
+    className: 'section-header-group',
+    children: [tagPill, labelTitle, summary]
+  });
+
+  // 2. Showcase grid of 4 albums
+  const albums = [
+    {
+      id: 'awarapan-2',
+      title: 'Awarapan 2',
+      artist: 'Mustafa Zahid · Pritam',
+      genre: 'Sufi Rock / Cinematic',
+      cover: './assets/images/album_awarapan.jpg',
+      tracks: [1, 2, 3, 4, 5]
+    },
+    {
+      id: 'love',
+      title: 'love',
+      artist: 'Kai Sterling & Sarah Preston',
+      genre: 'Ambient R&B / Neo-Soul',
+      cover: './assets/images/album_love.jpg',
+      tracks: [1, 2, 3, 4]
+    },
+    {
+      id: 'imagination',
+      title: 'IMAGINATION',
+      artist: 'Marcus Vance',
+      genre: 'Cosmic Funk / Neo-Soul',
+      cover: './assets/images/album_imagination.jpg',
+      tracks: [1, 2, 3, 4]
+    },
+    {
+      id: 'dreamer',
+      title: 'The Dreamer',
+      artist: 'Elena Rostova',
+      genre: 'Atmospheric Modular Synth',
+      cover: './assets/images/album_dreamer.jpg',
+      tracks: [1, 2, 3, 4]
+    }
+  ];
+
+  const albumCards = albums.map((alb) =>
+    createInteractiveRecordCard(alb, handlers.onPlayAlbum)
+  );
+
+  const albumGrid = createElement('div', {
+    className: 'interactive-album-grid',
+    children: albumCards
   });
 
   // 3. View Discography Button
@@ -218,7 +297,7 @@ export function createRecordsSection(handlers = {}) {
     className: 'btn-pill-glass',
     props: { type: 'button' },
     dataset: { modalOpen: 'modal-records' },
-    children: [createElement('span', { text: 'View Master Discography' })],
+    children: [createElement('span', { text: 'View Full Master Vault ↗' })],
     events: {
       click: () => {
         if (typeof handlers.onOpenDiscography === 'function') handlers.onOpenDiscography();
@@ -231,12 +310,12 @@ export function createRecordsSection(handlers = {}) {
 
   const content = createElement('div', {
     className: 'records-content',
-    children: [showcaseRow, labelTitle, summary, discographyBtn, spotlightBar]
+    children: [headerGroup, albumGrid, discographyBtn, spotlightBar]
   });
 
   return createElement('section', {
     id: 'records',
-    className: 'screen-section',
+    className: 'screen-section records-section',
     attrs: { 'aria-label': 'Featured Records Section' },
     children: [content]
   });

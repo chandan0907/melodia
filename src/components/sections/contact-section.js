@@ -1,8 +1,8 @@
-// PURPOSE: Programmatically constructs the Contact & Studio ("BEAT ME") section.
-// INTEGRATION: Handles studio session booking inquiries and displays studio contact info.
+// PURPOSE: Programmatically constructs the redesigned Contact & Studio Booking section.
+// INTEGRATION: Handles studio session booking inquiries and displays acoustic studio telemetry.
 // INPUT: Form submit handler.
-// OUTPUT: Semantic HTMLElement (<section id="contact" class="screen-section">).
-// SECURITY: Validates email input format and escapes user input before processing.
+// OUTPUT: Semantic HTMLElement (<section id="contact" class="screen-section contact-section">).
+// SECURITY: Validates email input format and safely handles user input.
 
 import { createElement } from '../common/dom.js';
 
@@ -36,19 +36,24 @@ function createInfoItem(label, value) {
  * @returns {HTMLElement} The contact section element
  */
 export function createContactSection(handlers = {}) {
+  const tagPill = createElement('div', {
+    className: 'section-category-pill',
+    text: '// MASTERING INQUIRIES'
+  });
+
   const mainHeading = createElement('h2', {
-    className: 'contact-main-heading',
+    className: 'section-label-title',
     text: 'BEAT ME'
   });
 
   const summary = createElement('p', {
     className: 'section-summary-text',
-    text: 'BEAT RECORDS is a world class recording studio built for artists, musicians, and producers seeking the pinnacle of sonic fidelity. Equipped with legendary vintage consoles, Dolby Atmos suites, and analog tape mastering.'
+    text: 'BEAT RECORDS is a world-class recording and mastering facility built for artists, musicians, and producers seeking the absolute pinnacle of sonic fidelity.'
   });
 
-  const subHeading = createElement('h3', {
-    className: 'contact-sub-heading',
-    text: 'CONTACT'
+  const headerGroup = createElement('div', {
+    className: 'section-header-group',
+    children: [tagPill, mainHeading, summary]
   });
 
   // Booking inquiry form
@@ -57,7 +62,7 @@ export function createContactSection(handlers = {}) {
     className: 'glass-input-field',
     props: {
       type: 'email',
-      placeholder: 'Enter your Email',
+      placeholder: 'Enter your artist or studio email...',
       required: true,
       autocomplete: 'email'
     }
@@ -66,7 +71,7 @@ export function createContactSection(handlers = {}) {
   const submitBtn = createElement('button', {
     className: 'btn-connect',
     props: { type: 'submit' },
-    text: 'Connect'
+    text: 'Request Session'
   });
 
   const inputWrapper = createElement('div', {
@@ -93,21 +98,28 @@ export function createContactSection(handlers = {}) {
   const infoGrid = createElement('div', {
     className: 'studio-info-grid',
     children: [
-      createInfoItem('Address', '1074 Pacific Avenue, San Francisco, CA 94133'),
-      createInfoItem('Email', 'beatme@melodiarecords.com'),
-      createInfoItem('Phone', '+1 (415) 890-1212')
+      createInfoItem('Studio Address', '1074 Pacific Avenue, San Francisco, CA 94133'),
+      createInfoItem('Engineering Desk', 'beatme@melodiarecords.com'),
+      createInfoItem('Direct Line', '+1 (415) 890-1212'),
+      createInfoItem('Acoustic Suite', 'Dolby Atmos 9.1.4 Certified')
     ]
+  });
+
+  // Telemetry badge row
+  const footerNote = createElement('div', {
+    className: 'studio-telemetry-note',
+    text: 'All audio processed with Pullman Acoustic calibration · Zero-latency WebRTC mesh active'
   });
 
   const content = createElement('div', {
     className: 'contact-content',
-    children: [mainHeading, summary, subHeading, contactForm, infoGrid]
+    children: [headerGroup, contactForm, infoGrid, footerNote]
   });
 
   return createElement('section', {
     id: 'contact',
-    className: 'screen-section',
-    attrs: { 'aria-label': 'Contact Studio Section' },
+    className: 'screen-section contact-section',
+    attrs: { 'aria-label': 'Contact and Studio Booking Section' },
     children: [content]
   });
 }
