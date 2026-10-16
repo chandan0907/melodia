@@ -1,9 +1,9 @@
-// Application Orchestrator: UI, Router, 3D Tilt, Modals & PWA
+// Application Orchestrator: UI, Router, 3D Tilt, Modals, Spotify & Listen Together P2P
 import { audio } from './audio.js';
 import { BackgroundAtmosphere, SpectrumVisualizer } from './visualizer.js';
 import { RECORDS, ARTISTS, STUDIO_INFO, PLAYLISTS } from './data.js';
 import { spotify } from './spotify.js';
-
+import { sync } from './sync.js';
 
 class MelodiaApp {
   constructor() {
@@ -16,20 +16,23 @@ class MelodiaApp {
   }
 
   init() {
-    // 1. Initialize Visualizers & Audio
+    // 1. Initialize Visualizers, Audio & P2P Sync
     this.atmosphere = new BackgroundAtmosphere('bg-canvas');
     this.dockSpectrum = new SpectrumVisualizer('dock-spectrum');
     this.modalSpectrum = new SpectrumVisualizer('modal-spectrum');
     audio.init();
+    sync.init();
 
     // 2. Setup Subscriptions & State Sync
     audio.subscribe((state) => this.renderPlaybackState(state));
+    sync.subscribe((syncState) => this.renderSyncState(syncState));
 
     // 3. UI Interactions
     this.setupSectionObserver();
     this.setup3DTilt();
     this.setupModals();
     this.setupMiniPlayer();
+    this.setupListenTogether();
     this.setupContactForm();
     this.setupPWA();
     this.setupKeyboardControls();
@@ -129,14 +132,13 @@ class MelodiaApp {
 
   /* ------------------------------------------------ Playback State Sync */
   renderPlaybackState(state) {
-    const { isPlaying, track, progress, volume } = state;
+    const { isPlaying, track, progress } = state;
 
     // Mini Player elements
     const dockTitle = document.getElementById('dock-title');
     const dockArtist = document.getElementById('dock-artist');
     const dockCover = document.getElementById('dock-cover');
     const dockVinyl = document.getElementById('dock-vinyl');
-    const dockPlayBtn = document.getElementById('dock-play-btn');
     const dockPlayIco = document.getElementById('dock-play-icon');
     const dockPauseIco = document.getElementById('dock-pause-icon');
 
@@ -185,15 +187,42 @@ class MelodiaApp {
     const prevBtn = document.getElementById('dock-prev-btn');
     const expandBtn = document.getElementById('dock-expand-btn');
 
-    if (playBtn) playBtn.addEventListener('click', () => audio.toggle());
-    if (nextBtn) nextBtn.addEventListener('click', () => audio.next());
-    if (prevBtn) prevBtn.addEventListener('click', () => audio.prev());
+    const handleToggle = () => {
+      if (sync.role === 'guest') {
+        sync.sendGuestCommand('toggle');
+      } else {
+        audio.toggle();
+      }
+    };
+
+    const handleNext = () => {
+      if (sync.role === 'guest') {
+        sync.sendGuestCommand('next');
+      } else {
+        audio.next();
+      }
+    };
+
+    const handlePrev = () => {
+      if (sync.role === 'guest') {
+        sync.sendGuestCommand('prev');
+      } else {
+        audio.prev();
+      }
+    };
+
+    if (playBtn) playBtn.addEventListener('click', handleToggle);
+    if (nextBtn) nextBtn.addEventListener('click', handleNext);
+    if (prevBtn) prevBtn.addEventListener('click', handlePrev);
     if (expandBtn) expandBtn.addEventListener('click', () => this.openModal('modal-player'));
 
     // Album cover clicks directly on the screen
     document.querySelectorAll('[data-play-album]').forEach((el) => {
       el.addEventListener('click', () => {
         const albumId = el.getAttribute('data-play-album');
+        if (sync.role === 'guest') {
+          sync.sendGuestCommand('select-record', { recordId: albumId, trackIdx: 0 });
+        }
         audio.playRecord(albumId, 0);
         if (albumId === 'awarapan-2') {
           this.showToast('Playing Toh Phir Aao from Awarapan 2 (Spotify Master)');
@@ -264,6 +293,9 @@ class MelodiaApp {
         const plId = btn.getAttribute('data-play-playlist');
         document.querySelectorAll('[data-play-playlist]').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
+        if (sync.role === 'guest') {
+          sync.sendGuestCommand('select-playlist', { playlistId: plId });
+        }
         audio.playPlaylist(plId);
         this.showToast(`Playing playlist: ${btn.textContent.trim()}`);
       });
@@ -298,31 +330,196 @@ class MelodiaApp {
     const mNextBtn = document.getElementById('modal-next-btn');
     const mPrevBtn = document.getElementById('modal-prev-btn');
     const mProgress = document.getElementById('modal-progress-bar');
-    const copyLinkBtn = document.getElementById('copy-room-link-btn');
 
-    if (mPlayBtn) mPlayBtn.addEventListener('click', () => audio.toggle());
-    if (mNextBtn) mNextBtn.addEventListener('click', () => audio.next());
-    if (mPrevBtn) mPrevBtn.addEventListener('click', () => audio.prev());
+    const handleToggle = () => {
+      if (sync.role === 'guest') {
+        sync.sendGuestCommand('toggle');
+      } else {
+        audio.toggle();
+      }
+    };
+
+    const handleNext = () => {
+      if (sync.role === 'guest') {
+        sync.sendGuestCommand('next');
+      } else {
+        audio.next();
+      }
+    };
+
+    const handlePrev = () => {
+      if (sync.role === 'guest') {
+        sync.sendGuestCommand('prev');
+      } else {
+        audio.prev();
+      }
+    };
+
+    if (mPlayBtn) mPlayBtn.addEventListener('click', handleToggle);
+    if (mNextBtn) mNextBtn.addEventListener('click', handleNext);
+    if (mPrevBtn) mPrevBtn.addEventListener('click', handlePrev);
 
     if (mProgress) {
       mProgress.addEventListener('click', (e) => {
         const rect = mProgress.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
-        const percent = clickX / rect.width;
-        audio.currentTrack.currentTimeSeconds = percent * audio.currentTrack.durationSeconds;
-        audio.notify();
+        const percent = Math.max(0, Math.min(1, clickX / rect.width));
+        const targetSeconds = percent * (audio.currentTrack.durationSeconds || 240);
+        audio.seek(targetSeconds);
+        if (sync.role === 'guest') {
+          sync.sendGuestCommand('seek', { time: targetSeconds });
+        }
+      });
+    }
+  }
+
+  /* ------------------------------------------------ Listen Together P2P Sync */
+  setupListenTogether() {
+    const inviteBanner = document.getElementById('invite-banner');
+    const joinRoomBtn = document.getElementById('join-room-btn');
+    const dismissInviteBtn = document.getElementById('dismiss-invite-btn');
+    const copyLinkBtn = document.getElementById('copy-room-link-btn');
+    const leaveRoomBtn = document.getElementById('leave-room-btn');
+    const roomLinkWrap = document.getElementById('room-link-wrap');
+    const roomLinkInput = document.getElementById('room-link-input');
+
+    let pendingInviteRoomId = null;
+
+    // Listen for room detection from URL (#room=...)
+    window.addEventListener('sync:invite', (e) => {
+      pendingInviteRoomId = e.detail?.roomId;
+      if (inviteBanner && pendingInviteRoomId) {
+        inviteBanner.hidden = false;
+      }
+    });
+
+    // Listen for custom toasts from sync or any component
+    window.addEventListener('app:toast', (e) => {
+      if (e.detail) this.showToast(e.detail);
+    });
+
+    if (joinRoomBtn) {
+      joinRoomBtn.addEventListener('click', async () => {
+        if (!pendingInviteRoomId) return;
+        joinRoomBtn.disabled = true;
+        joinRoomBtn.textContent = 'Joining...';
+        try {
+          audio.ensureAudioContext();
+          if (inviteBanner) inviteBanner.hidden = true;
+          await sync.joinRoom(pendingInviteRoomId);
+          this.openModal('modal-player');
+        } catch (e) {
+          console.error(e);
+          this.showToast('Could not join room. Host may be offline.');
+        } finally {
+          joinRoomBtn.disabled = false;
+          joinRoomBtn.textContent = 'Join & Listen';
+        }
+      });
+    }
+
+    if (dismissInviteBtn) {
+      dismissInviteBtn.addEventListener('click', () => {
+        if (inviteBanner) inviteBanner.hidden = true;
       });
     }
 
     if (copyLinkBtn) {
-      copyLinkBtn.addEventListener('click', () => {
-        const shareUrl = window.location.origin + window.location.pathname + '#join-studio-session';
-        navigator.clipboard.writeText(shareUrl).then(() => {
-          this.showToast('Room link copied! Share with friends to sync music.');
-        }).catch(() => {
-          this.showToast('Link ready: ' + shareUrl);
-        });
+      copyLinkBtn.addEventListener('click', async () => {
+        try {
+          copyLinkBtn.disabled = true;
+          copyLinkBtn.textContent = 'Connecting...';
+
+          const inviteLink = await sync.startHosting();
+          if (roomLinkWrap && roomLinkInput) {
+            roomLinkWrap.hidden = false;
+            roomLinkInput.value = inviteLink;
+            roomLinkInput.select();
+          }
+
+          try {
+            await navigator.clipboard.writeText(inviteLink);
+            this.showToast('🎧 Room link copied! Share with friends to sync music.');
+          } catch (clipErr) {
+            this.showToast('Room link created! Copy from the box below.');
+          }
+
+          copyLinkBtn.textContent = 'Copied Link! ✓';
+          setTimeout(() => {
+            copyLinkBtn.disabled = false;
+            copyLinkBtn.textContent = 'Invite Friends';
+          }, 2400);
+        } catch (err) {
+          console.error(err);
+          copyLinkBtn.disabled = false;
+          copyLinkBtn.textContent = 'Invite Friends';
+          this.showToast('Could not start room. Check connection.');
+        }
       });
+    }
+
+    if (leaveRoomBtn) {
+      leaveRoomBtn.addEventListener('click', () => {
+        sync.leaveRoom();
+        if (roomLinkWrap) roomLinkWrap.hidden = true;
+        if (roomLinkInput) roomLinkInput.value = '';
+      });
+    }
+
+    if (roomLinkInput) {
+      roomLinkInput.addEventListener('click', () => {
+        roomLinkInput.select();
+        try {
+          navigator.clipboard.writeText(roomLinkInput.value);
+          this.showToast('Copied room link!');
+        } catch (e) {}
+      });
+    }
+  }
+
+  renderSyncState(syncState) {
+    const dot = document.getElementById('room-status-dot');
+    const title = document.getElementById('room-status-title');
+    const desc = document.getElementById('room-status-desc');
+    const leaveBtn = document.getElementById('leave-room-btn');
+    const roomLinkWrap = document.getElementById('room-link-wrap');
+    const roomLinkInput = document.getElementById('room-link-input');
+
+    const isActive = syncState.role !== 'solo';
+    if (dot) dot.classList.toggle('active', isActive);
+
+    if (title) {
+      if (syncState.role === 'host') {
+        title.textContent = `🎧 Host · ${syncState.listenersCount} listening together`;
+      } else if (syncState.role === 'guest') {
+        title.textContent = '🎧 Connected · Synced with Host';
+      } else {
+        title.textContent = 'Listen Together with Friends';
+      }
+    }
+
+    if (desc) {
+      if (syncState.role === 'host') {
+        desc.textContent = 'Room is live! Share your invite link. Any track or playback change is synced in real time.';
+      } else if (syncState.role === 'guest') {
+        desc.textContent = 'Synced with host! Enjoy the music together in real time.';
+      } else {
+        desc.textContent = 'Invite friends to sync and hear the exact same music in real time.';
+      }
+    }
+
+    if (leaveBtn) {
+      leaveBtn.hidden = (syncState.role === 'solo');
+    }
+
+    if (roomLinkWrap && roomLinkInput) {
+      if (syncState.role === 'host' && syncState.inviteLink) {
+        roomLinkWrap.hidden = false;
+        roomLinkInput.value = syncState.inviteLink;
+      } else if (syncState.role === 'solo') {
+        roomLinkWrap.hidden = true;
+        roomLinkInput.value = '';
+      }
     }
   }
 
@@ -358,6 +555,9 @@ class MelodiaApp {
     container.querySelectorAll('[data-play-record]').forEach((card) => {
       card.addEventListener('click', () => {
         const id = card.getAttribute('data-play-record');
+        if (sync.role === 'guest') {
+          sync.sendGuestCommand('select-record', { recordId: id, trackIdx: 0 });
+        }
         audio.playRecord(id, 0);
         this.showToast(`Loaded ${id.toUpperCase()} master disc`);
         const backdrop = card.closest('.glass-modal-backdrop');
@@ -465,7 +665,11 @@ class MelodiaApp {
       // Space to toggle play/pause (when not typing in form)
       if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
         e.preventDefault();
-        audio.toggle();
+        if (sync.role === 'guest') {
+          sync.sendGuestCommand('toggle');
+        } else {
+          audio.toggle();
+        }
       }
       // Escape to close modals
       if (e.code === 'Escape') {

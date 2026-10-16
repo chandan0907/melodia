@@ -227,23 +227,43 @@ class AudioEngine {
     this.playYouTubeVideo(firstId, 0);
   }
 
-  toggle() {
-    this.isPlaying = !this.isPlaying;
-
-    if (this.isPlaying) {
-      if (this.mode === 'youtube' && this.ytPlayer && this.ytReady && typeof this.ytPlayer.playVideo === 'function') {
-        this.stopSynthSequence();
-        this.ytPlayer.playVideo();
-      } else {
-        this.startSynthSequence();
-      }
-    } else {
-      if (this.ytPlayer && this.ytReady && typeof this.ytPlayer.pauseVideo === 'function') {
-        this.ytPlayer.pauseVideo();
-      }
+  play() {
+    this.isPlaying = true;
+    if (this.mode === 'youtube' && this.ytPlayer && this.ytReady && typeof this.ytPlayer.playVideo === 'function') {
       this.stopSynthSequence();
+      this.ytPlayer.playVideo();
+    } else {
+      this.startSynthSequence();
     }
+    this.notify();
+    this.broadcastSync();
+  }
 
+  pause() {
+    this.isPlaying = false;
+    if (this.ytPlayer && this.ytReady && typeof this.ytPlayer.pauseVideo === 'function') {
+      this.ytPlayer.pauseVideo();
+    }
+    this.stopSynthSequence();
+    this.notify();
+    this.broadcastSync();
+  }
+
+  toggle() {
+    if (this.isPlaying) {
+      this.pause();
+    } else {
+      this.play();
+    }
+  }
+
+  seek(seconds) {
+    this.currentTrack.currentTimeSeconds = Math.max(0, Math.min(seconds, this.currentTrack.durationSeconds || seconds));
+    if (this.ytPlayer && this.ytReady && typeof this.ytPlayer.seekTo === 'function') {
+      try {
+        this.ytPlayer.seekTo(this.currentTrack.currentTimeSeconds, true);
+      } catch (e) {}
+    }
     this.notify();
     this.broadcastSync();
   }

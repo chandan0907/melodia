@@ -29,6 +29,25 @@
   <!-- Hidden YouTube host for streaming -->
   <div id="yt-host"></div>
 
+  <!-- Top Invite Banner for Listen Together -->
+  <aside id="invite-banner" class="invite-banner" hidden>
+    <div class="invite-banner-inner">
+      <div class="invite-banner-content">
+        <span class="invite-pulse"></span>
+        <div class="invite-text">
+          <strong>You've been invited to Listen Together!</strong>
+          <span>Join the studio room to sync playback with your friend in real time.</span>
+        </div>
+      </div>
+      <div class="invite-actions">
+        <button id="join-room-btn" class="btn-pill-primary" style="padding: 8px 20px; font-size: 0.82rem;" type="button">
+          Join &amp; Listen
+        </button>
+        <button id="dismiss-invite-btn" class="btn-invite-dismiss" type="button" aria-label="Dismiss">&times;</button>
+      </div>
+    </div>
+  </aside>
+
   <!-- Top Glassmorphic App Header -->
   <header class="app-header">
     <div class="brand-logo" data-goto="hero">
@@ -398,13 +417,24 @@
 
           <!-- Listen Together Box -->
           <div class="listen-together-box">
-            <div class="listen-together-text">
-              <strong>Listen Together with Friends</strong>
-              <span>Invite anyone to hear this music in real time.</span>
+            <div class="listen-together-info">
+              <div class="room-status-badge">
+                <span id="room-status-dot" class="status-dot"></span>
+                <strong id="room-status-title">Listen Together with Friends</strong>
+              </div>
+              <span id="room-status-desc">Invite friends to sync and hear the exact same music in real time.</span>
+              <div id="room-link-wrap" class="room-link-container" hidden>
+                <input id="room-link-input" class="room-link-field" readonly value="" placeholder="Generating room link...">
+              </div>
             </div>
-            <button id="copy-room-link-btn" class="btn-pill-primary" style="padding: 9px 18px; font-size: 0.8rem;" type="button">
-              Copy Link
-            </button>
+            <div class="room-actions-group">
+              <button id="copy-room-link-btn" class="btn-pill-primary" style="padding: 9px 18px; font-size: 0.8rem;" type="button">
+                Invite Friends
+              </button>
+              <button id="leave-room-btn" class="btn-room-leave" type="button" hidden>
+                Leave Room
+              </button>
+            </div>
           </div>
         </div>
       </div>
