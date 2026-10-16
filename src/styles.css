@@ -687,6 +687,33 @@ a {
   border-color: var(--glass-border-hover);
 }
 
+.btn-spotlight-connect {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: rgba(30, 215, 96, 0.15);
+  border: 1px solid rgba(30, 215, 96, 0.4);
+  color: #1ed760;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: all 0.25s var(--ease-smooth);
+}
+
+.btn-spotlight-connect:hover {
+  background: rgba(30, 215, 96, 0.28);
+  border-color: #1ed760;
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.btn-spotlight-connect.connected {
+  background: rgba(30, 215, 96, 0.25);
+  border-color: #1ed760;
+  color: #ffffff;
+}
+
 .spotify-embed-container {
   width: min(760px, 100%);
   margin-top: 14px;

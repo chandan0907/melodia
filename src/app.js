@@ -2,6 +2,8 @@
 import { audio } from './audio.js';
 import { BackgroundAtmosphere, SpectrumVisualizer } from './visualizer.js';
 import { RECORDS, ARTISTS, STUDIO_INFO, PLAYLISTS } from './data.js';
+import { spotify } from './spotify.js';
+
 
 class MelodiaApp {
   constructor() {
@@ -210,6 +212,49 @@ class MelodiaApp {
         embedContainer.hidden = !isHidden;
         toggleEmbedBtn.classList.toggle('active', !isHidden);
         this.showToast(isHidden ? 'Spotify Web Player expanded' : 'Spotify Web Player collapsed');
+      });
+    }
+
+    // Spotify Connect / OAuth Login
+    const spotifyLoginBtn = document.getElementById('btn-spotify-login');
+    const spotifyLoginLabel = document.getElementById('spotify-login-label');
+
+    const updateSpotifyUI = (user) => {
+      if (!spotifyLoginBtn || !spotifyLoginLabel) return;
+      if (spotify.accessToken) {
+        spotifyLoginBtn.classList.add('connected');
+        spotifyLoginLabel.textContent = user?.display_name ? `✓ ${user.display_name.split(' ')[0]}` : '✓ Connected';
+        spotifyLoginBtn.title = `Connected as ${user?.display_name || 'Spotify User'}. Click to disconnect.`;
+      } else {
+        spotifyLoginBtn.classList.remove('connected');
+        spotifyLoginLabel.textContent = 'Connect Spotify';
+        spotifyLoginBtn.title = 'Connect your Spotify Account';
+      }
+    };
+
+    if (spotifyLoginBtn) {
+      updateSpotifyUI(spotify.user);
+
+      spotifyLoginBtn.addEventListener('click', () => {
+        if (spotify.accessToken) {
+          if (confirm('Disconnect Spotify account?')) {
+            spotify.logout();
+            updateSpotifyUI(null);
+            this.showToast('Spotify disconnected');
+          }
+        } else {
+          this.showToast('Redirecting to Spotify authorization...');
+          spotify.login();
+        }
+      });
+
+      window.addEventListener('spotify:connected', (e) => {
+        updateSpotifyUI(e.detail);
+        this.showToast(`Connected to Spotify: ${e.detail?.display_name || 'Active'}`);
+      });
+
+      window.addEventListener('spotify:disconnected', () => {
+        updateSpotifyUI(null);
       });
     }
   }
