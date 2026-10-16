@@ -1,5 +1,6 @@
 // Local presentation state only. Browsing never calls a playback action.
 import { createElement, createSvg, createSvgPath } from '../common/dom.js';
+import { artworkUrl } from '../common/artwork.js';
 
 function arrow(direction) {
   return createSvg('svg', { attrs: { viewBox: '0 0 24 24', width: '18', height: '18', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.7', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' }, children: [createSvgPath(direction < 0 ? 'm14 6-6 6 6 6' : 'm10 6 6 6-6 6')] });
@@ -27,7 +28,7 @@ export function createPlaylistCarousel({ records = [], onActivate } = {}) {
       else card.removeAttribute('aria-current');
     });
     pages.forEach((page, i) => page.setAttribute('aria-pressed', String(i === selectedIndex)));
-    thumbnail.src = records[selectedIndex].cover;
+    thumbnail.src = artworkUrl(records[selectedIndex].cover);
     selectedTitle.textContent = records[selectedIndex].title;
     status.textContent = `${records[selectedIndex].title}, collection ${selectedIndex + 1} of ${records.length}`;
     if (focus) cards[selectedIndex].focus({ preventScroll: true });

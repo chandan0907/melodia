@@ -1,0 +1,62 @@
+[
+  {
+    "path": "src/data.js",
+    "unchangedSinceConcurrentRebrand": true,
+    "currentSHA256": "83DB4A08F6E3B97E30D48837BCDA73A16107FA9E0F38A45C88AF7C84AAC808A9"
+  },
+  {
+    "path": "src/main.js",
+    "unchangedSinceConcurrentRebrand": true,
+    "currentSHA256": "8B869DCF48D8C5F1408EF97463DC49F88B46EF3B1E696D1DD32304EB22979CB6"
+  },
+  {
+    "path": "src/app/router.js",
+    "unchangedSinceConcurrentRebrand": true,
+    "currentSHA256": "0FC7143096833BBA1D13980AD9A3BF488F3A537B3F89B1BB486CC8242FA767BA"
+  },
+  {
+    "path": "src/services/audio-service.js",
+    "unchangedSinceConcurrentRebrand": true,
+    "currentSHA256": "D516AC5D98B128F9EBC0F85BCBF07ACC065EB46730F941C47865735AC61092A0"
+  },
+  {
+    "path": "src/services/realtime-sync.js",
+    "unchangedSinceConcurrentRebrand": true,
+    "currentSHA256": "6CEA5D867F88B91E120701506949A2B9BD005A79A1E7E37735D83CFBEB474752"
+  },
+  {
+    "path": "src/services/spotify-service.js",
+    "unchangedSinceConcurrentRebrand": true,
+    "currentSHA256": "573D699124B3688DE0821E58F0281C910221179CE6B3A71EFE4A20F29165E1A8"
+  },
+  {
+    "path": "src/state/audio-state.js",
+    "unchangedSinceConcurrentRebrand": true,
+    "currentSHA256": "12EFE48AD43DE5E64F6253309375E306DDB1E7E3DC1D97844021CDBF328A03E1"
+  },
+  {
+    "path": "src/state/room-state.js",
+    "unchangedSinceConcurrentRebrand": true,
+    "currentSHA256": "410E5B3F4959985E932B71AEDE2155EF5DB1578C37813FE57B0006FD72612DDE"
+  },
+  {
+    "path": "package.json",
+    "unchangedSinceConcurrentRebrand": true,
+    "currentSHA256": "952E93CF058911A30489B9AD4C8F243EAFFDB4017CF47FAEAA16539BAF26D56D"
+  },
+  {
+    "path": "vite.config.js",
+    "unchangedSinceConcurrentRebrand": true,
+    "currentSHA256": "F96EB4EC6D779EB67F035BBBE748C6F15B5B037A838A3BDA716F5DFEF03678A9"
+  },
+  {
+    "path": "capacitor.config.json",
+    "unchangedSinceConcurrentRebrand": true,
+    "currentSHA256": "8CE8D80DD542E99509CC7A96969591AAE50B4F33390CB4EFA741FD378F7A7578"
+  },
+  {
+    "path": "manifest.webmanifest",
+    "unchangedSinceConcurrentRebrand": true,
+    "currentSHA256": "B7616DCCBBFA5406E946E46D55F04B9E04A61529E5BC6E2009A1C454E8BD3318"
+  }
+]

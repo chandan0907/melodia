@@ -15,7 +15,7 @@
   z-index: 100;
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  background: rgba(18, 20, 14, 0.82);
+  background: rgba(var(--color-surface-rgb), 0.82);
   border: 1px solid var(--glass-border);
   box-shadow: 0 12px 38px rgba(0, 0, 0, 0.32), var(--glass-highlight);
 }
@@ -36,7 +36,7 @@
   display: grid;
   place-items: center;
   border: 1px solid var(--glass-border-hover);
-  box-shadow: inset 0 0 0 6px rgba(4, 4, 3, 0.25);
+  box-shadow: inset 0 0 0 6px rgba(var(--color-background-rgb), 0.25);
 }
 .logo-icon::after {
   content: '';
@@ -73,8 +73,8 @@
   border-radius: var(--radius-pill);
   transition: color 160ms ease, background 160ms ease;
 }
-.nav-item a:hover { color: var(--text-main); background: rgba(161, 168, 100, 0.08); }
-.nav-item.active a { color: var(--bg-deep); background: var(--color-leaf); font-weight: 500; }
+.nav-item a:hover { color: var(--text-main); background: rgba(var(--color-sage-rgb), 0.08); }
+.nav-item a[aria-current="page"] { color: var(--bg-deep); background: var(--color-leaf); font-weight: 500; }
 .nav-actions { display: flex; align-items: center; gap: 8px; }
 .btn-app-install, .btn-header-sync {
   min-height: 44px;
@@ -91,8 +91,8 @@
   white-space: nowrap;
   transition: background 160ms ease, border-color 160ms ease;
 }
-.btn-app-install { background: rgba(244, 245, 236, 0.025); }
-.btn-header-sync { color: var(--color-leaf); background: rgba(74, 83, 39, 0.16); }
+.btn-app-install { background: rgba(var(--color-text-rgb), 0.025); }
+.btn-header-sync { color: var(--color-leaf); background: rgba(var(--color-olive-rgb), 0.16); }
 .btn-app-install:hover, .btn-header-sync:hover { background: var(--glass-bg-hover); border-color: var(--glass-border-hover); }
 .rail-left, .rail-right { display: none !important; }
 
@@ -124,7 +124,7 @@
   left: 12px;
   right: 12px;
   min-height: 66px;
-  background: rgba(18, 20, 14, 0.94);
+  background: rgba(var(--color-surface-rgb), 0.94);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
@@ -150,8 +150,8 @@
   flex: 1;
   border-radius: 13px;
 }
-.mobile-nav-item.active { color: var(--color-leaf); background: rgba(161, 168, 100, 0.10); }
-.mobile-nav-item:hover { color: var(--text-main); background: rgba(161, 168, 100, 0.06); }
+.mobile-nav-item[aria-current="page"] { color: var(--color-leaf); background: rgba(var(--color-sage-rgb), 0.10); }
+.mobile-nav-item:hover { color: var(--text-main); background: rgba(var(--color-sage-rgb), 0.06); }
 
 @media (max-width: 1000px) {
   .app-header { gap: 12px; padding-inline: 16px; }

@@ -28,7 +28,7 @@ function createArtistRosterCard(artist) {
   });
 
   const role = createElement('p', {
-    attrs: { style: 'color: #bcd643; font-size:0.85rem; font-weight:600;' },
+    attrs: { style: 'color:var(--color-sage); font-size:0.85rem; font-weight:500;' },
     text: artist.role
   });
 
@@ -48,7 +48,7 @@ function createArtistRosterCard(artist) {
 
   const footer = createElement('div', {
     attrs: {
-      style: 'margin-top:12px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.08); font-size:0.75rem; color: #9e96b3;'
+      style: 'margin-top:12px; padding-top:10px; border-top:1px solid var(--glass-border); font-size:0.8rem; color:var(--text-mute);'
     },
     children: [gearDiv, listenersDiv]
   });
@@ -81,7 +81,7 @@ export function createArtistsModal(handlers = {}) {
 
   const headerTitle = createElement('h3', {
     className: 'modal-header-title',
-    text: 'RESIDENT ARTISTS & PRODUCERS'
+    text: 'Resident artists & producers'
   });
 
   const headerDesc = createElement('p', {

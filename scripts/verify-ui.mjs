@@ -114,11 +114,19 @@ check('five track rows retain their exact existing selection actions', () => {
 });
 const cards = hero.querySelectorAll('.playlist-card');
 if (source === repo || cards.length) {
+  const { createPlaylistCarousel } = await load('src/components/sections/playlist-carousel.js');
+  check('empty carousel presents a readable state without playback or controls', () => {
+    calls.length = 0;
+    const empty = createPlaylistCarousel({ records: [], onActivate: handlers.onSelectTrack });
+    assert.equal(empty.textContent, 'No collections available yet.');
+    assert.equal(empty.querySelectorAll('button').length, 0);
+    assert.deepEqual(calls, []);
+  });
   check('carousel uses four existing record covers and native accessible buttons', () => {
     assert.equal(cards.length, RECORDS.length);
     cards.forEach((card, index) => {
       assert.equal(card.tagName, 'BUTTON'); assert.ok(card.getAttribute('aria-label'));
-      assert.equal(card.querySelector('img').getAttribute('src'), RECORDS[index].cover);
+      assert.equal(fileURLToPath(card.querySelector('img').getAttribute('src')), path.resolve(repo, RECORDS[index].cover));
     });
   });
   check('each carousel card invokes its existing action exactly once', () => cards.forEach((card, index) => oneClick(card, 'onSelectTrack', RECORDS[index].id, 0)));
@@ -215,6 +223,27 @@ check('desktop and mobile retain all four navigation destinations', () => {
       calls.length = 0; link.click(); assert.equal(calls.length, 1); assert.equal(calls[0][0], 'onNavigate'); assert.equal(calls[0][1], id);
     }
   }
+});
+if (source === repo) check('global Space guard preserves native controls and the existing page shortcut', () => {
+  // Execute only the extracted keyboard binding against stubs. Do not import app/services.
+  const appSource = readFileSync(path.join(source, 'src/app/app.js'), 'utf8');
+  const keyboardBody = appSource.match(/setupKeyboardControls\(\)\s*\{([\s\S]*?)\n  \}\n\}/)?.[1];
+  assert.ok(keyboardBody, 'Keyboard binding method was not found');
+  let listener;
+  const shortcutCalls = [];
+  const stubWindow = { addEventListener(type, callback) { assert.equal(type, 'keydown'); listener = callback; } };
+  new Function('window', 'document', 'sync', keyboardBody)(stubWindow, document, { togglePlay() { shortcutCalls.push('toggle'); } });
+  const native = [new TestNode('button'), new TestNode('a'), new TestNode('input'), new TestNode('textarea'), new TestNode('select')];
+  const slider = new TestNode('div'); slider.setAttribute('role', 'slider'); native.push(slider);
+  const editable = new TestNode('div'); editable.setAttribute('contenteditable', 'true'); native.push(editable);
+  const iconInsideButton = native[0].appendChild(new TestNode('svg')); native.push(iconInsideButton);
+  for (const target of native) {
+    const event = { target, code: 'Space', key: ' ', defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } };
+    listener(event); assert.equal(event.defaultPrevented, false);
+  }
+  assert.deepEqual(shortcutCalls, []);
+  const pageEvent = { target: new TestNode('div'), code: 'Space', key: ' ', defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } };
+  listener(pageEvent); assert.equal(pageEvent.defaultPrevented, true); assert.deepEqual(shortcutCalls, ['toggle']);
 });
 if (baseline) {
   check('protected data, services, state, bootstrap, router, and package files are unchanged', () => {

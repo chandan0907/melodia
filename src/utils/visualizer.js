@@ -2,9 +2,39 @@
 // INTEGRATION: Listens to AudioEngine state to dynamically adjust particle agitation and frequency spectrum bars.
 // INPUT: Target HTML5 Canvas element IDs and frequency audio data.
 // OUTPUT: 60 FPS GPU-accelerated canvas animations with fluid mouse parallax.
-// THEME: Pullman Green & Icky Green Holographic Studio Palette.
+// THEME: Shared crimson presentation tokens, with motion preferences respected.
 
 import { audio } from '../services/audio-service.js';
+
+// Canvas colors follow the same centralized palette as the surrounding interface.
+function readTheme() {
+  const styles = getComputedStyle(document.documentElement);
+  const color = (name, fallback) => styles.getPropertyValue(name).trim() || fallback;
+  return {
+    background: color('--color-background', '#000000'),
+    surface: color('--color-surface', '#14090B'),
+    olive: color('--color-accent-deep', '#6E2634'),
+    sage: color('--color-accent', '#D95757'),
+    leaf: color('--color-highlight', '#EF6464')
+  };
+}
+
+function colorChannels(hex) {
+  const value = hex.replace('#', '');
+  return {
+    r: parseInt(value.slice(0, 2), 16),
+    g: parseInt(value.slice(2, 4), 16),
+    b: parseInt(value.slice(4, 6), 16)
+  };
+}
+
+function listenToMedia(query, listener, remove = false) {
+  if (typeof query.addEventListener === 'function') {
+    query[remove ? 'removeEventListener' : 'addEventListener']('change', listener);
+  } else {
+    query[remove ? 'removeListener' : 'addListener'](listener);
+  }
+}
 
 /**
  * BackgroundAtmosphere handles deep ambient bokeh particle rendering with mouse parallax.
@@ -24,10 +54,16 @@ export class BackgroundAtmosphere {
     };
     this.time = 0;
     this.running = false;
+    this.frameId = null;
+    this.theme = readTheme();
+    this.motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    this.mobileQuery = window.matchMedia('(max-width: 700px)');
 
     this.resize = this.resize.bind(this);
     this.loop = this.loop.bind(this);
     this.onMouseMove = this.onMouseMove.bind(this);
+    this.onTouchMove = this.onTouchMove.bind(this);
+    this.updateMotion = this.updateMotion.bind(this);
 
     this.init();
   }
@@ -37,23 +73,11 @@ export class BackgroundAtmosphere {
     this.resize();
     window.addEventListener('resize', this.resize);
     window.addEventListener('mousemove', this.onMouseMove);
-    window.addEventListener('touchmove', (e) => {
-      if (e.touches[0]) {
-        this.mouse.targetX = e.touches[0].clientX;
-        this.mouse.targetY = e.touches[0].clientY;
-      }
-    }, { passive: true });
+    window.addEventListener('touchmove', this.onTouchMove, { passive: true });
+    listenToMedia(this.motionQuery, this.updateMotion);
+    listenToMedia(this.mobileQuery, this.updateMotion);
 
-    // Curated Pullman Green & Icky Green Studio Palette
-    const colors = [
-      { r: 35, g: 45, b: 20 },   // Deep Pullman green
-      { r: 55, g: 68, b: 28 },   // Mid Pullman olive
-      { r: 95, g: 116, b: 44 },  // Murky moss green
-      { r: 140, g: 158, b: 59 }, // Icky green base
-      { r: 168, g: 191, b: 63 }, // Vibrant Icky green
-      { r: 188, g: 214, b: 67 }, // Acid Icky green glow
-      { r: 214, g: 242, b: 85 }  // Luminous highlight
-    ];
+    const colors = [this.theme.surface, this.theme.olive, this.theme.sage, this.theme.leaf].map(colorChannels);
 
     for (let i = 0; i < this.numParticles; i++) {
       const c = colors[Math.floor(Math.random() * colors.length)];
@@ -71,8 +95,19 @@ export class BackgroundAtmosphere {
       });
     }
 
-    this.running = true;
-    requestAnimationFrame(this.loop);
+    this.updateMotion();
+  }
+
+  // Only one pending frame is allowed; hidden mobile and reduced-motion canvases stay idle.
+  updateMotion() {
+    this.running = Boolean(this.ctx) && !this.motionQuery.matches && !this.mobileQuery.matches;
+    if (!this.running) {
+      if (this.frameId !== null) cancelAnimationFrame(this.frameId);
+      this.frameId = null;
+      this.ctx?.clearRect(0, 0, this.width, this.height);
+    } else if (this.frameId === null) {
+      this.frameId = requestAnimationFrame(this.loop);
+    }
   }
 
   // PURPOSE: Resizes canvas buffer with device pixel ratio scaling for crisp retina display.
@@ -94,8 +129,16 @@ export class BackgroundAtmosphere {
     this.mouse.targetY = e.clientY;
   }
 
+  onTouchMove(e) {
+    if (e.touches[0]) {
+      this.mouse.targetX = e.touches[0].clientX;
+      this.mouse.targetY = e.touches[0].clientY;
+    }
+  }
+
   // PURPOSE: Main requestAnimationFrame render loop drawing blurred bokeh particles.
   loop() {
+    this.frameId = null;
     if (!this.running || !this.ctx) return;
     this.time += 0.015;
 
@@ -143,30 +186,37 @@ export class BackgroundAtmosphere {
       ctx.fill();
     });
 
-    // Dark Pullman green vignette layer overlay
+    // Dark vignette follows the shared background color.
     const vig = ctx.createRadialGradient(
       w / 2, h / 2, Math.min(w, h) * 0.25,
       w / 2, h / 2, Math.max(w, h) * 0.88
     );
-    vig.addColorStop(0, 'rgba(15, 19, 10, 0)');
-    vig.addColorStop(0.65, 'rgba(15, 19, 10, 0.48)');
-    vig.addColorStop(1, 'rgba(7, 9, 4, 0.94)');
+    const base = colorChannels(this.theme.background);
+    vig.addColorStop(0, `rgba(${base.r}, ${base.g}, ${base.b}, 0)`);
+    vig.addColorStop(0.65, `rgba(${base.r}, ${base.g}, ${base.b}, 0.48)`);
+    vig.addColorStop(1, `rgba(${base.r}, ${base.g}, ${base.b}, 0.94)`);
     ctx.fillStyle = vig;
     ctx.fillRect(0, 0, w, h);
 
-    requestAnimationFrame(this.loop);
+    this.frameId = requestAnimationFrame(this.loop);
   }
 
   // PURPOSE: Stops canvas animation and cleans up listeners.
   destroy() {
+    if (!this.canvas) return;
     this.running = false;
+    if (this.frameId !== null) cancelAnimationFrame(this.frameId);
+    this.frameId = null;
     window.removeEventListener('resize', this.resize);
     window.removeEventListener('mousemove', this.onMouseMove);
+    window.removeEventListener('touchmove', this.onTouchMove);
+    listenToMedia(this.motionQuery, this.updateMotion, true);
+    listenToMedia(this.mobileQuery, this.updateMotion, true);
   }
 }
 
 /**
- * SpectrumVisualizer renders audio frequency bars with Pullman & Icky Green gradient fills.
+ * SpectrumVisualizer renders audio frequency bars with the shared olive and sage gradient.
  */
 export class SpectrumVisualizer {
   constructor(canvasId) {
@@ -176,9 +226,14 @@ export class SpectrumVisualizer {
     this.freqData = new Uint8Array(48);
     this.time = 0;
     this.running = false;
+    this.frameId = null;
+    this.theme = readTheme();
+    this.motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    this.initialVisibility = this.canvas.style.visibility;
 
     this.resize = this.resize.bind(this);
     this.draw = this.draw.bind(this);
+    this.updateMotion = this.updateMotion.bind(this);
 
     this.init();
   }
@@ -187,8 +242,20 @@ export class SpectrumVisualizer {
   init() {
     this.resize();
     window.addEventListener('resize', this.resize);
-    this.running = true;
-    requestAnimationFrame(this.draw);
+    listenToMedia(this.motionQuery, this.updateMotion);
+    this.updateMotion();
+  }
+
+  updateMotion() {
+    this.running = Boolean(this.ctx) && !this.motionQuery.matches;
+    this.canvas.style.visibility = this.motionQuery.matches ? 'hidden' : this.initialVisibility;
+    if (!this.running) {
+      if (this.frameId !== null) cancelAnimationFrame(this.frameId);
+      this.frameId = null;
+      this.ctx?.clearRect(0, 0, this.width, this.height);
+    } else if (this.frameId === null) {
+      this.frameId = requestAnimationFrame(this.draw);
+    }
   }
 
   // PURPOSE: Synchronizes canvas resolution with bounding client dimensions.
@@ -205,8 +272,9 @@ export class SpectrumVisualizer {
     }
   }
 
-  // PURPOSE: Renders animated vertical equalizer frequency bars with Pullman to Icky Green gradient.
+  // PURPOSE: Renders the existing frequency bars using shared olive and sage colors.
   draw() {
+    this.frameId = null;
     if (!this.running || !this.ctx) return;
     this.time += 0.08;
 
@@ -239,12 +307,12 @@ export class SpectrumVisualizer {
     const totalGap = gap * (barCount - 1);
     const barWidth = Math.max(2, (w - totalGap) / barCount);
 
-    // Pullman Green to Icky Green Gradient with Acid highlight tip
+    // Shared olive-to-leaf presentation gradient.
     const grad = ctx.createLinearGradient(0, h, 0, 0);
-    grad.addColorStop(0, '#2e3b1a');    // Deep Pullman green
-    grad.addColorStop(0.45, '#5f742c'); // Murky moss
-    grad.addColorStop(0.8, '#a8bf3f');  // Vibrant Icky green
-    grad.addColorStop(1, '#bcd643');    // Acid Icky green tip
+    grad.addColorStop(0, this.theme.surface);
+    grad.addColorStop(0.45, this.theme.olive);
+    grad.addColorStop(0.8, this.theme.sage);
+    grad.addColorStop(1, this.theme.leaf);
 
     ctx.fillStyle = grad;
 
@@ -264,12 +332,17 @@ export class SpectrumVisualizer {
       ctx.fill();
     }
 
-    requestAnimationFrame(this.draw);
+    this.frameId = requestAnimationFrame(this.draw);
   }
 
   // PURPOSE: Stops spectrum render loop and cleans up event listeners.
   destroy() {
+    if (!this.canvas) return;
     this.running = false;
+    if (this.frameId !== null) cancelAnimationFrame(this.frameId);
+    this.frameId = null;
+    this.canvas.style.visibility = this.initialVisibility;
     window.removeEventListener('resize', this.resize);
+    listenToMedia(this.motionQuery, this.updateMotion, true);
   }
 }

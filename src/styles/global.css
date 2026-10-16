@@ -1,4 +1,4 @@
-/* Shared type, accessible interactions, and a quiet olive atmosphere. */
+/* Shared type, accessible interactions, and a quiet crimson atmosphere. */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -21,7 +21,7 @@ html {
 body {
   min-width: 280px;
   min-height: 100vh;
-  background: radial-gradient(ellipse at 50% 12%, rgba(74, 83, 39, 0.15), transparent 52%), var(--bg-deep);
+  background: var(--bg-deep);
   line-height: 1.6;
   overflow-x: clip;
   position: relative;
@@ -50,7 +50,7 @@ a { color: inherit; text-decoration: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .btn-pill-primary, .btn-pill-glass { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 11px 21px; border-radius: 99px; font-size: 13px; font-weight: 500; transition: background 160ms, border-color 160ms; }
 .btn-pill-primary { background: var(--color-leaf); color: var(--bg-deep); border: 1px solid var(--color-leaf); }
-.btn-pill-primary:hover { background: var(--color-text); }
+.btn-pill-primary:hover { background: var(--color-control-hover); }
 .btn-pill-glass { background: var(--glass-bg); color: var(--text-main); border: 1px solid var(--glass-border); }
 .btn-pill-glass:hover { background: var(--glass-bg-hover); border-color: var(--glass-border-hover); }
 img, svg { flex-shrink: 0; }
@@ -61,7 +61,7 @@ button, a, input, textarea, select { touch-action: manipulation; }
 :where(button, a, input, textarea, select, [tabindex]):focus-visible {
   outline: 2px solid var(--color-leaf) !important;
   outline-offset: 4px;
-  box-shadow: 0 0 0 6px rgba(4, 4, 3, 0.78);
+  box-shadow: 0 0 0 6px rgba(var(--color-background-rgb), 0.78);
 }
 ::selection { color: var(--bg-deep); background: var(--color-leaf); }
 
@@ -75,7 +75,7 @@ button, a, input, textarea, select { touch-action: manipulation; }
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.16;
+  opacity: 0.045;
   z-index: 0;
   pointer-events: none;
 }
@@ -100,10 +100,10 @@ button, a, input, textarea, select { touch-action: manipulation; }
   z-index: -10;
 }
 
-/* Existing animation names remain available with restrained sage colors. */
+/* Existing animation names remain available with restrained red colors. */
 @keyframes neonPulse {
-  0%, 100% { box-shadow: 0 0 14px rgba(161, 168, 100, 0.10); }
-  50% { box-shadow: 0 0 22px rgba(161, 168, 100, 0.20); }
+  0%, 100% { box-shadow: 0 0 14px rgba(var(--color-sage-rgb), 0.10); }
+  50% { box-shadow: 0 0 22px rgba(var(--color-sage-rgb), 0.20); }
 }
 @keyframes floatGentle {
   0%, 100% { transform: translateY(0); }
@@ -111,11 +111,11 @@ button, a, input, textarea, select { touch-action: manipulation; }
 }
 @keyframes shimmerBorder {
   0%, 100% { border-color: var(--glass-border); }
-  50% { border-color: rgba(206, 211, 147, 0.36); }
+  50% { border-color: rgba(var(--color-leaf-rgb), 0.36); }
 }
 @keyframes radarPing {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(161, 168, 100, 0.18); }
-  70% { box-shadow: 0 0 0 8px rgba(161, 168, 100, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--color-sage-rgb), 0.18); }
+  70% { box-shadow: 0 0 0 8px rgba(var(--color-sage-rgb), 0); }
 }
 
 @media (max-width: 700px) {

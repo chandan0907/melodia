@@ -4,6 +4,8 @@
 // OUTPUT: Native DOM and SVG element instances with registered event listeners and attributes.
 // SECURITY: Strictly uses textContent and setAttribute; completely eliminates cross-site scripting (XSS) risks.
 
+import { artworkUrl } from './artwork.js';
+
 /**
  * Creates a standard HTML element with attributes, properties, event listeners, and children.
  * @param {string} tag - HTML tag name (e.g. 'div', 'button', 'input')
@@ -40,7 +42,7 @@ export function createElement(tag, options = {}) {
   if (options.attrs) {
     Object.entries(options.attrs).forEach(([key, val]) => {
       if (val !== undefined && val !== null) {
-        el.setAttribute(key, String(val));
+        el.setAttribute(key, String(key === 'src' ? artworkUrl(val) : val));
       }
     });
   }

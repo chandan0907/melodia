@@ -60,6 +60,7 @@ export function createContactSection(handlers = {}) {
   const emailInput = createElement('input', {
     id: 'contact-email-input',
     className: 'glass-input-field',
+    attrs: { 'aria-label': 'Your artist or studio email' },
     props: {
       type: 'email',
       placeholder: 'Enter your artist or studio email...',

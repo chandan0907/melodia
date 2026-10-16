@@ -1,28 +1,43 @@
 /* TUNORA · shared surface, type, spacing, and interaction tokens. */
 :root {
-  /* Canonical palette. All presentation layers use these roles. */
-  --color-background: #040403;
-  --color-background-secondary: #0B0C09;
-  --color-surface: #12140E;
-  --color-glass: rgba(29, 32, 20, 0.60);
-  --color-olive: #4A5327;
-  --color-sage: #A1A864;
-  --color-leaf: #CED393;
-  --color-text: #F4F5EC;
-  --color-text-secondary: #A7AD9B;
-  --color-border: rgba(206, 211, 147, 0.18);
+  /* Black and crimson palette shared by every presentation layer. */
+  --color-background: #000000;
+  --color-background-secondary: #0A0506;
+  --color-surface: #14090B;
+  --color-glass: rgba(32, 16, 19, 0.70);
+  --color-accent-deep: #6E2634;
+  --color-accent: #D95757;
+  --color-highlight: #EF6464;
+  --color-control-hover: #FF8882;
+  --color-background-rgb: 0, 0, 0;
+  --color-surface-rgb: 20, 9, 11;
+  --color-glass-rgb: 32, 16, 19;
+  --color-accent-deep-rgb: 110, 38, 52;
+  --color-accent-rgb: 217, 87, 87;
+  --color-highlight-rgb: 239, 100, 100;
+  --color-text: #F8F3F2;
+  --color-text-rgb: 248, 243, 242;
+  --color-text-secondary: #B8A4A2;
+  /* Existing components retain their token names while adopting the red palette. */
+  --color-olive: var(--color-accent-deep);
+  --color-sage: var(--color-accent);
+  --color-leaf: var(--color-highlight);
+  --color-olive-rgb: var(--color-accent-deep-rgb);
+  --color-sage-rgb: var(--color-accent-rgb);
+  --color-leaf-rgb: var(--color-highlight-rgb);
+  --color-border: rgba(var(--color-leaf-rgb), 0.18);
 
   --bg-deep: var(--color-background);
   --bg-surface: var(--color-background-secondary);
   --bg-card: var(--color-surface);
-  --bg-card-hover: rgba(74, 83, 39, 0.24);
+  --bg-card-hover: rgba(var(--color-olive-rgb), 0.24);
   --bg-elevated: var(--color-surface);
   --glass-bg: var(--color-glass);
-  --glass-bg-hover: rgba(74, 83, 39, 0.30);
+  --glass-bg-hover: rgba(var(--color-olive-rgb), 0.30);
   --glass-border: var(--color-border);
-  --glass-border-hover: rgba(206, 211, 147, 0.36);
+  --glass-border-hover: rgba(var(--color-leaf-rgb), 0.36);
   --glass-border-active: var(--color-sage);
-  --glass-highlight: inset 0 1px 0 rgba(244, 245, 236, 0.065);
+  --glass-highlight: inset 0 1px 0 rgba(var(--color-text-rgb), 0.065);
   --glass-blur: blur(24px) saturate(110%);
   --glass-card-shadow: 0 24px 64px rgba(0, 0, 0, 0.48), var(--glass-highlight);
 
@@ -52,10 +67,10 @@
   --color-icky-acid: var(--color-leaf);
   --color-icky-glow: var(--color-leaf);
   --color-icky-light: var(--color-text);
-  --accent-glow: rgba(74, 83, 39, 0.22);
-  --accent-icky-glow: rgba(161, 168, 100, 0.16);
-  --accent-acid-glow: rgba(206, 211, 147, 0.16);
-  --accent-pullman-glow: rgba(74, 83, 39, 0.20);
+  --accent-glow: rgba(var(--color-olive-rgb), 0.22);
+  --accent-icky-glow: rgba(var(--color-sage-rgb), 0.16);
+  --accent-acid-glow: rgba(var(--color-leaf-rgb), 0.16);
+  --accent-pullman-glow: rgba(var(--color-olive-rgb), 0.20);
   --accent-lime: var(--color-leaf);
   --accent-sage: var(--color-sage);
   --accent-leaf: var(--color-leaf);

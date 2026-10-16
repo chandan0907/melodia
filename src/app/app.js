@@ -5,6 +5,7 @@
 // SECURITY: Zero authored HTML or JSX markup; zero innerHTML; builds all DOM nodes via safe native DOM APIs.
 
 import { createElement } from '../components/common/dom.js';
+import { artworkUrl } from '../components/common/artwork.js';
 import { createToast } from '../components/common/toast.js';
 import { createInviteBanner } from '../components/common/banner.js';
 import { createHeader } from '../components/layout/header.js';
@@ -384,7 +385,7 @@ export class TunoraApp {
 
     if (dockTitle) dockTitle.textContent = track.title || 'Studio Playback';
     if (dockArtist) dockArtist.textContent = track.artist || 'Beat Records';
-    if (dockCover) dockCover.src = track.cover || './assets/images/album_love.jpg';
+    if (dockCover) dockCover.src = artworkUrl(track.cover || './assets/images/album_love.jpg');
     if (dockVinyl) dockVinyl.classList.toggle('spinning', isPlaying);
 
     // Hero Turntable Element
@@ -430,7 +431,7 @@ export class TunoraApp {
     }
     const heroCover = document.getElementById('hero-track-cover');
     const heroAlbum = document.getElementById('hero-track-album');
-    if (heroCover) { heroCover.src = track.cover; heroCover.alt = `${track.album || track.title} artwork`; }
+    if (heroCover) { heroCover.src = artworkUrl(track.cover); heroCover.alt = `${track.album || track.title} artwork`; }
     if (heroAlbum) heroAlbum.textContent = track.album || '';
     ['hero-progress-bar', 'modal-progress-bar'].forEach((id) => {
       const slider = document.getElementById(id);
@@ -470,7 +471,7 @@ export class TunoraApp {
     if (modalTitle) modalTitle.textContent = track.title;
     if (modalArtist) modalArtist.textContent = track.artist;
     if (modalAlbum) modalAlbum.textContent = track.album;
-    if (modalCover) modalCover.src = track.cover;
+    if (modalCover) modalCover.src = artworkUrl(track.cover);
     if (modalVinyl) modalVinyl.classList.toggle('playing', isPlaying);
 
     if (modalPlayIco && modalPauseIco) {
@@ -566,6 +567,15 @@ export class TunoraApp {
         desc.textContent = 'Create or join a synchronized music room to listen in lockstep with friends worldwide.';
       }
     }
+    // Connection feedback reflects existing state; transport/retry behavior stays in the service.
+    if (title && syncState.connecting) title.textContent = `Connecting to room ${syncState.roomId || ''}…`;
+    if (desc && syncState.connecting) desc.textContent = 'Establishing your listening session. This may take a moment.';
+    if (inRoom && !syncState.connected && !syncState.connecting) {
+      if (title) title.textContent = 'Room connection unavailable';
+      if (desc) desc.textContent = 'Check your connection. You can leave this room and join again using its code.';
+    }
+    if (dot) dot.classList.toggle('active', inRoom && !!syncState.connected);
+    if (title) title.setAttribute('aria-live', 'polite');
 
     if (copyLinkBtn) {
       copyLinkBtn.textContent = inRoom ? 'Invite Friends' : 'Create Room';
@@ -664,7 +674,9 @@ export class TunoraApp {
       modal.classList.add('active');
       document.body.classList.add('has-open-modal');
       document.querySelectorAll('#app > :not(.glass-modal-backdrop):not(.app-toast)').forEach((el) => { el.inert = true; });
-      modal.querySelector('button, input, [tabindex="0"]')?.focus({ preventScroll: true });
+      requestAnimationFrame(() => {
+        if (modal.classList.contains('active')) modal.querySelector('button, input, [tabindex="0"]')?.focus({ preventScroll: true });
+      });
       if (modalId === 'modal-player' && this.modalSpectrum) {
         this.modalSpectrum.resize();
       }
@@ -707,6 +719,10 @@ export class TunoraApp {
     window.addEventListener('scroll', () => {
       if (!scheduled) { scheduled = true; requestAnimationFrame(reflectVisibleSection); }
     }, { passive: true });
+    if ('IntersectionObserver' in window) {
+      this.navigationPresentationObserver = new IntersectionObserver(reflectVisibleSection, { threshold: [0, 0.1, 0.5, 1] });
+      sections.forEach((section) => this.navigationPresentationObserver.observe(section));
+    }
     requestAnimationFrame(reflectVisibleSection);
   }
 

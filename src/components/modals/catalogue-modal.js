@@ -26,7 +26,7 @@ function createRecordCard(rec, onSelectRecord) {
   const artist = createElement('p', { text: rec.artist });
 
   const metaSpan = createElement('span', {
-    attrs: { style: 'font-size:0.75rem; color: #bcd643; font-weight:600;' },
+    attrs: { style: 'font-size:0.8rem; color:var(--color-sage); font-weight:400;' },
     text: `▶ ${rec.tracks ? rec.tracks.length : 0} Master Tracks · ${rec.genre || 'Master Tape'}`
   });
 
@@ -40,15 +40,17 @@ function createRecordCard(rec, onSelectRecord) {
   if (rec.spotifyUrl) {
     const spotifyBadge = createElement('span', {
       attrs: {
-        style: 'font-size:0.7rem; color:#1ed760; font-weight:700; background:rgba(30,215,96,0.12); padding:2px 8px; border-radius:999px;'
+        style: 'font-size:0.75rem; color:var(--color-leaf); font-weight:500; background:var(--glass-bg); padding:2px 8px; border-radius:999px;'
       },
       text: '● Spotify'
     });
     footer.appendChild(spotifyBadge);
   }
 
-  return createElement('div', {
+  return createElement('button', {
     className: 'catalogue-card',
+    props: { type: 'button' },
+    attrs: { 'aria-label': `Play ${rec.title} by ${rec.artist}` },
     dataset: { playRecord: rec.id },
     children: [img, title, artist, footer],
     events: {
@@ -81,7 +83,7 @@ export function createCatalogueModal(handlers = {}) {
 
   const headerTitle = createElement('h3', {
     className: 'modal-header-title',
-    text: 'DISCOGRAPHY & MASTER RECORDS'
+    text: 'Discography & master records'
   });
 
   const headerDesc = createElement('p', {

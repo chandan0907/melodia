@@ -3,7 +3,7 @@
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(4, 4, 3, 0.82);
+  background: rgba(var(--color-background-rgb), 0.82);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   display: flex;
@@ -12,7 +12,7 @@
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 220ms ease, visibility 220ms ease;
+  transition: opacity 220ms ease;
   padding: 24px;
 }
 .glass-modal-backdrop.active { opacity: 1; visibility: visible; pointer-events: auto; }
@@ -20,7 +20,7 @@
   width: min(860px, 100%);
   max-height: min(88vh, 1000px);
   border-radius: 28px;
-  background: linear-gradient(145deg, rgba(29, 32, 20, 0.96), var(--color-background-secondary));
+  background: linear-gradient(145deg, rgba(var(--color-glass-rgb), 0.96), var(--color-background-secondary));
   border: 1px solid var(--glass-border);
   box-shadow: 0 36px 100px rgba(0, 0, 0, 0.65), var(--glass-highlight);
   position: relative;
@@ -38,7 +38,7 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: rgba(244, 245, 236, 0.03);
+  background: rgba(var(--color-text-rgb), 0.03);
   border: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
@@ -60,6 +60,7 @@
 .modal-header-desc { color: var(--text-mute); font-size: 14px; line-height: 1.65; margin-bottom: 28px; }
 .catalogue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
 .catalogue-card {
+  text-align: left;
   border-radius: 18px;
   background: var(--bg-card);
   border: 1px solid var(--glass-border);

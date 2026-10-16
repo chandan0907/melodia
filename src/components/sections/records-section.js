@@ -5,6 +5,7 @@
 // OUTPUT: Semantic HTMLElement (<section id="records" class="screen-section records-section">).
 
 import { createElement, createSvg, createSvgPath } from '../common/dom.js';
+import { RECORDS } from '../../data.js';
 
 /**
  * Creates an individual interactive glass album card with a sliding vinyl record.
@@ -38,7 +39,7 @@ function createInteractiveRecordCard(record, onPlay) {
   });
 
   const playSvg = createSvg('svg', {
-    attrs: { viewBox: '0 0 24 24', width: '24', height: '24', fill: '#0f130a' },
+    attrs: { viewBox: '0 0 24 24', width: '24', height: '24', fill: 'currentColor' },
     children: [createSvgPath('M8 5v14l11-7z')]
   });
 
@@ -84,8 +85,10 @@ function createInteractiveRecordCard(record, onPlay) {
     children: [albumTitle, albumArtist, footerRow]
   });
 
-  return createElement('div', {
+  return createElement('button', {
     className: 'interactive-album-card tilt-card',
+    props: { type: 'button' },
+    attrs: { 'aria-label': `Play ${record.title} by ${record.artist}` },
     dataset: { playAlbum: record.id },
     children: [vinylGroove, sleeveCover, metaBox],
     events: {
@@ -104,7 +107,7 @@ function createInteractiveRecordCard(record, onPlay) {
 function createSpotifySpotlightBar(handlers = {}) {
   // 1. Spotify Badge
   const spotifyIco = createSvg('svg', {
-    attrs: { viewBox: '0 0 24 24', width: '16', height: '16', fill: '#1ed760' },
+    attrs: { viewBox: '0 0 24 24', width: '16', height: '16', fill: 'currentColor' },
     children: [createSvgPath('M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424a.623.623 0 0 1-.857.206c-2.348-1.435-5.304-1.76-8.785-.964a.624.624 0 0 1-.277-1.218c3.808-.87 7.076-.496 9.713 1.119a.623.623 0 0 1 .206.857zm1.225-2.723a.78.78 0 0 1-1.072.257c-2.687-1.652-6.785-2.131-9.965-1.166a.78.78 0 0 1-.462-1.492c3.633-1.103 8.147-.568 11.242 1.33a.78.78 0 0 1 .257 1.071zm.105-2.835C14.693 8.92 9.4 8.745 6.32 9.68a.936.936 0 1 1-.546-1.792c3.526-1.07 9.38-.868 13.11 1.346a.936.936 0 1 1-.968 1.632z')]
   });
 
@@ -166,7 +169,7 @@ function createSpotifySpotlightBar(handlers = {}) {
   });
 
   const loginIco = createSvg('svg', {
-    attrs: { viewBox: '0 0 24 24', width: '15', height: '15', fill: '#1ed760' },
+    attrs: { viewBox: '0 0 24 24', width: '15', height: '15', fill: 'currentColor' },
     children: [createSvgPath('M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424a.623.623 0 0 1-.857.206c-2.348-1.435-5.304-1.76-8.785-.964a.624.624 0 0 1-.277-1.218c3.808-.87 7.076-.496 9.713 1.119a.623.623 0 0 1 .206.857zm1.225-2.723a.78.78 0 0 1-1.072.257c-2.687-1.652-6.785-2.131-9.965-1.166a.78.78 0 0 1-.462-1.492c3.633-1.103 8.147-.568 11.242 1.33a.78.78 0 0 1 .257 1.071zm.105-2.835C14.693 8.92 9.4 8.745 6.32 9.68a.936.936 0 1 1-.546-1.792c3.526-1.07 9.38-.868 13.11 1.346a.936.936 0 1 1-.968 1.632z')]
   });
 
@@ -234,12 +237,12 @@ export function createRecordsSection(handlers = {}) {
 
   const labelTitle = createElement('h2', {
     className: 'section-label-title',
-    text: 'STUDIO RELEASES'
+    text: 'Studio releases'
   });
 
   const summary = createElement('p', {
     className: 'section-summary-text',
-    text: 'Direct transfers from 2-inch multi-track master tapes. Tap any album to play immediately in studio fidelity or preview the sliding vinyl.'
+    text: 'Explore our collection. Pick a record and settle into the sound.'
   });
 
   const headerGroup = createElement('div', {
@@ -248,40 +251,7 @@ export function createRecordsSection(handlers = {}) {
   });
 
   // 2. Showcase grid of 4 albums
-  const albums = [
-    {
-      id: 'awarapan-2',
-      title: 'Awarapan 2',
-      artist: 'Mustafa Zahid · Pritam',
-      genre: 'Sufi Rock / Cinematic',
-      cover: './assets/images/album_awarapan.jpg',
-      tracks: [1, 2, 3, 4, 5]
-    },
-    {
-      id: 'love',
-      title: 'love',
-      artist: 'Kai Sterling & Sarah Preston',
-      genre: 'Ambient R&B / Neo-Soul',
-      cover: './assets/images/album_love.jpg',
-      tracks: [1, 2, 3, 4]
-    },
-    {
-      id: 'imagination',
-      title: 'IMAGINATION',
-      artist: 'Marcus Vance',
-      genre: 'Cosmic Funk / Neo-Soul',
-      cover: './assets/images/album_imagination.jpg',
-      tracks: [1, 2, 3, 4]
-    },
-    {
-      id: 'dreamer',
-      title: 'The Dreamer',
-      artist: 'Elena Rostova',
-      genre: 'Atmospheric Modular Synth',
-      cover: './assets/images/album_dreamer.jpg',
-      tracks: [1, 2, 3, 4]
-    }
-  ];
+  const albums = RECORDS;
 
   const albumCards = albums.map((alb) =>
     createInteractiveRecordCard(alb, handlers.onPlayAlbum)

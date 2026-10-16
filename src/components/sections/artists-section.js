@@ -4,6 +4,7 @@
 // OUTPUT: Semantic HTMLElement (<section id="artists" class="screen-section artists-section">).
 
 import { createElement } from '../common/dom.js';
+import { ARTISTS } from '../../data.js';
 
 /**
  * Creates an individual luxury glass artist portrait card.
@@ -32,12 +33,12 @@ function createLuxuryArtistCard(artist, onOpen) {
 
   const gearSpan = createElement('span', {
     className: 'artist-gear-text',
-    text: `🎙 ${artist.gear}`
+    text: `🎙 ${artist.favoriteGear}`
   });
 
   const listenersSpan = createElement('span', {
     className: 'artist-listeners-text',
-    text: `● ${artist.listeners} monthly`
+    text: `● ${artist.listeners}`
   });
 
   const metaRow = createElement('div', {
@@ -50,8 +51,9 @@ function createLuxuryArtistCard(artist, onOpen) {
     children: [roleTag, nameDiv, metaRow]
   });
 
-  return createElement('div', {
+  return createElement('button', {
     className: 'luxury-artist-card tilt-card',
+    props: { type: 'button' },
     dataset: { modalOpen: 'modal-artists' },
     attrs: { title: `View profile for ${artist.name}` },
     children: [img, overlay],
@@ -76,7 +78,7 @@ export function createArtistsSection(handlers = {}) {
 
   const labelTitle = createElement('h2', {
     className: 'section-label-title',
-    text: 'RESIDENT ARTISTS'
+    text: 'Resident artists'
   });
 
   const summary = createElement('p', {
@@ -89,32 +91,7 @@ export function createArtistsSection(handlers = {}) {
     children: [tagPill, labelTitle, summary]
   });
 
-  const artists = [
-    {
-      id: 'marcus-vance',
-      name: 'Marcus Vance',
-      role: 'Saxophone & Sound Design',
-      gear: 'Neve 8048 / Selmer Mark VI',
-      listeners: '3.4M',
-      photo: './assets/images/artist_marcus.jpg'
-    },
-    {
-      id: 'kai-sterling',
-      name: 'Kai Sterling',
-      role: 'Vocals & Analog Synths',
-      gear: 'Studer A820 / Prophet-5',
-      listeners: '5.2M',
-      photo: './assets/images/artist_kai.jpg'
-    },
-    {
-      id: 'elena-cruz',
-      name: 'Elena Cruz',
-      role: 'Electronic Composer',
-      gear: 'Moog One / Telefunken U47',
-      listeners: '2.8M',
-      photo: './assets/images/artist_elena.jpg'
-    }
-  ];
+  const artists = ARTISTS.filter((artist) => ['marcus-vance', 'kai-sterling', 'elena-cruz'].includes(artist.id));
 
   const cards = artists.map((art) =>
     createLuxuryArtistCard(art, handlers.onOpenArtists)
