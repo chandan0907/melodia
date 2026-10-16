@@ -1,4 +1,4 @@
-/* Reusable glass overlays, catalogues, and feedback. */
+/* Reusable player overlay and feedback. */
 .glass-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -48,30 +48,6 @@
   transition: color 160ms ease, background 160ms ease;
 }
 .modal-close-btn:hover { color: var(--text-main); background: var(--glass-bg-hover); }
-.modal-header-title {
-  font-family: var(--font-body);
-  font-size: clamp(25px, 4vw, 32px);
-  font-weight: 400;
-  letter-spacing: -0.04em;
-  margin-bottom: 9px;
-  padding-right: 44px;
-  line-height: 1.2;
-}
-.modal-header-desc { color: var(--text-mute); font-size: 14px; line-height: 1.65; margin-bottom: 28px; }
-.catalogue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
-.catalogue-card {
-  text-align: left;
-  border-radius: 18px;
-  background: var(--bg-card);
-  border: 1px solid var(--glass-border);
-  padding: 12px;
-  cursor: pointer;
-  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
-}
-.catalogue-card:hover { border-color: var(--glass-border-hover); background: var(--glass-bg-hover); transform: translateY(-3px); }
-.catalogue-card img { width: 100%; aspect-ratio: 1; border-radius: 11px; object-fit: cover; margin-bottom: 12px; }
-.catalogue-card h4 { font-size: 15px; font-weight: 500; letter-spacing: -0.015em; line-height: 1.4; }
-.catalogue-card p { font-size: 13px; line-height: 1.5; color: var(--text-mute); margin-top: 4px; }
 .app-toast {
   position: fixed;
   bottom: 104px;
@@ -100,9 +76,5 @@
   .glass-modal-backdrop { padding: 10px; }
   .glass-modal-card { padding: 24px 18px; border-radius: 23px; max-height: 92dvh; }
   .modal-close-btn { top: 14px; right: 14px; }
-  .modal-header-desc { margin-bottom: 22px; }
-  .catalogue-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .catalogue-card { padding: 9px; border-radius: 14px; }
-  .catalogue-card h4 { font-size: 14px; }
   .app-toast { bottom: 165px; }
 }

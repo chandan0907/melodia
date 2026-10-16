@@ -52,8 +52,6 @@ export function createHeader(handlers = {}) {
   // 2. Navigation Links
   const navSections = [
     { id: 'hero', label: 'Home', active: true },
-    { id: 'records', label: 'Projects', active: false },
-    { id: 'artists', label: 'Artists', active: false },
     { id: 'contact', label: 'Contact', active: false }
   ];
 

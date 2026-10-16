@@ -82,44 +82,12 @@
 .home-together-copy p { color: var(--text-mute); font-size: 12px; margin-top: 3px; }
 .home-together-strip .btn-pill-glass { font-size: 12px; padding: 10px 17px; gap: 10px; }
 
-/* Existing studio sections share the same quiet surfaces and typographic scale. */
-.records-content, .artists-content, .contact-content { width: 100%; }
+/* Contact shares the same quiet surfaces and typographic scale. */
+.contact-content { width: 100%; }
 .section-header-group { display: flex; flex-direction: column; align-items: flex-start; text-align: left; max-width: 680px; margin-bottom: 30px; }
 .section-category-pill { color: var(--accent-sage); font-size: 11px; font-weight: 500; letter-spacing: .13em; margin-bottom: 13px; text-transform: uppercase; }
 .section-label-title { font-size: clamp(30px,4vw,44px); font-weight: 400; letter-spacing: -.045em; line-height: 1.2; color: var(--text-main); margin-bottom: 13px; }
 .section-summary-text { color: var(--text-mute); font-size: 15px; line-height: 1.8; max-width: 620px; }
-.interactive-album-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 20px; width: 100%; margin-bottom: 28px; }
-.interactive-album-card { position: relative; min-width: 0; padding: 9px; text-align: left; border-radius: 20px; background: var(--glass-bg); border: 1px solid var(--glass-border); transition: border-color .25s, transform .25s; }
-.interactive-album-card:hover { border-color: var(--accent-sage); }
-.album-vinyl-groove { display: none; }
-.album-sleeve-jacket { position: relative; }
-.album-sleeve-jacket > img { display: block; width: 100%; aspect-ratio: 1; border-radius: 12px; object-fit: cover; }
-.card-play-ring { display: grid; place-items: center; position: absolute; bottom: 12px; right: 12px; width: 42px; height: 42px; border-radius: 50%; color: var(--bg-deep); background: var(--accent-leaf); box-shadow: 0 5px 20px #0005; }
-.card-play-ring svg { fill: currentColor; }
-.album-card-meta { padding: 15px 7px 10px; }
-.album-card-title { font-size: 17px; font-weight: 500; letter-spacing: -.025em; }
-.album-card-artist { font-size: 12px; color: var(--text-mute); margin-top: 4px; line-height: 1.6; }
-.album-card-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; color: var(--text-mute); font-size: 10px; }
-.album-card-genre { flex: 1; }
-.album-card-tracks { white-space: nowrap; }
-.spotify-spotlight-bar { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 22px; padding: 27px; margin-top: 35px; text-align: left; }
-.spotify-badge { display: flex; align-items: center; gap: 8px; color: var(--accent-sage); font-size: 10px; letter-spacing: .1em; margin-bottom: 15px; }
-.spotify-badge svg, .btn-spotlight-connect svg { fill: var(--accent-leaf); }
-.spotify-spotlight-title { font-size: 24px; font-weight: 500; letter-spacing: -.035em; }
-.spotify-spotlight-sub { font-size: 13px; color: var(--text-mute); margin-top: 7px; line-height: 1.7; }
-.spotify-spotlight-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 23px; }
-.spotify-spotlight-actions > * { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; padding: 10px 16px; border: 1px solid var(--glass-border); border-radius: 99px; font-size: 12px; color: var(--text-main); }
-.spotify-spotlight-actions > *:hover { border-color: var(--accent-sage); }
-.spotify-spotlight-actions .btn-spotlight-play { background: var(--accent-leaf); color: var(--bg-deep); }
-.spotify-embed-container { margin-top: 24px; }
-.spotify-embed-container iframe { display: block; border: 0; }
-.luxury-artist-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 22px; margin-bottom: 28px; }
-.luxury-artist-card { text-align: left; min-width: 0; overflow: hidden; border: 1px solid var(--glass-border); background: var(--bg-card); border-radius: 22px; cursor: pointer; }
-.luxury-artist-card > img { display: block; width: 100%; aspect-ratio: 1.12; object-fit: cover; }
-.artist-glass-overlay { padding: 22px; background: var(--glass-bg); }
-.artist-role-badge { color: var(--accent-sage); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
-.artist-name { font-size: 24px; font-weight: 500; letter-spacing: -.035em; margin: 6px 0 15px; }
-.artist-meta-row { display: flex; flex-direction: column; gap: 7px; color: var(--text-mute); font-size: 11px; }
 .contact-content { border-top: 1px solid var(--glass-border); padding-top: 50px; }
 .contact-form-box { width: 100%; max-width: 650px; }
 .glass-input-wrapper { display: flex; gap: 10px; padding: 8px; border: 1px solid var(--glass-border); border-radius: 18px; background: var(--glass-bg); }
@@ -149,10 +117,6 @@
   .home-listening-grid { grid-template-columns: 1fr; }
   .now-playing-body { grid-template-columns: 135px minmax(0,1fr); }
   .home-now-playing, .home-track-list { padding: 22px; }
-  .interactive-album-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .luxury-artist-grid { gap: 12px; }
-  .artist-glass-overlay { padding: 14px; }
-  .artist-name { font-size: 20px; }
   .studio-info-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .carousel-arrow { min-width: 44px; min-height: 44px; }
   .carousel-page { min-width: 44px; min-height: 44px; }
@@ -181,22 +145,9 @@
   .panel-meta { font-size: 10px; }
   .home-together-strip { padding: 23px 0 0; align-items: flex-start; flex-direction: column; gap: 16px; }
   .home-together-strip .btn-pill-glass { width: 100%; justify-content: center; }
-  .interactive-album-grid { gap: 12px; }
-  .album-card-title { font-size: 16px; }
-  .album-card-artist { font-size: 11px; }
-  .album-card-footer { display: none; }
-  .spotify-spotlight-bar { padding: 21px; }
-  .spotify-spotlight-title { font-size: 21px; }
-  .spotify-spotlight-actions { display: grid; grid-template-columns: 1fr; }
-  .luxury-artist-grid { grid-template-columns: 1fr; }
-  .luxury-artist-card { display: grid; grid-template-columns: 110px minmax(0,1fr); }
-  .luxury-artist-card > img { height: 100%; aspect-ratio: auto; }
-  .artist-name { font-size: 22px; margin-bottom: 8px; }
-  .artist-role-badge { font-size: 9px; }
-  .artist-meta-row { font-size: 10px; }
   .glass-input-wrapper { flex-direction: column; }
 }
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .glass-panel, .carousel-navigation-pill, .interactive-album-card, .spotify-spotlight-bar { background: var(--bg-card); } }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .glass-panel, .carousel-navigation-pill { background: var(--bg-card); } }
 @media (max-width: 380px) {
   .now-playing-body { display: flex; flex-direction: column; align-items: stretch; gap: 15px; }
   .now-playing-art { width: 100px; margin: 0 auto; }

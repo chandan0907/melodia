@@ -214,11 +214,13 @@ check('persistent dock transport and mute preserve callbacks', () => {
   oneClick(dock.querySelector('#dock-play-btn'), 'onTogglePlay'); oneClick(dock.querySelector('#dock-prev-btn'), 'onPrev');
   oneClick(dock.querySelector('#dock-next-btn'), 'onNext'); oneClick(dock.querySelector('#dock-volume-btn'), 'onToggleMute');
 });
-check('desktop and mobile retain all four navigation destinations', () => {
+check('desktop and mobile retain Home and Contact without removed section links', () => {
   for (const factory of [createHeader, createMobileNav]) {
     const navigation = mount(factory(handlers));
     const links = navigation.querySelectorAll('[data-goto]');
-    for (const id of ['hero','records','artists','contact']) {
+    assert.ok(links.every(link => ['hero', 'contact'].includes(link.dataset.goto)));
+    assert.deepEqual([...new Set(links.map(link => link.dataset.goto))], ['hero', 'contact']);
+    for (const id of ['hero','contact']) {
       const link = links.find(item => item.dataset.goto === id); assert.ok(link, `Missing ${id}`);
       calls.length = 0; link.click(); assert.equal(calls.length, 1); assert.equal(calls[0][0], 'onNavigate'); assert.equal(calls[0][1], id);
     }

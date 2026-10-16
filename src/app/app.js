@@ -12,13 +12,9 @@ import { createHeader } from '../components/layout/header.js';
 import { createLeftRail, createRightRail } from '../components/layout/rails.js';
 import { createMobileNav } from '../components/layout/mobile-nav.js';
 import { createHeroSection } from '../components/sections/hero-section.js';
-import { createRecordsSection } from '../components/sections/records-section.js';
-import { createArtistsSection } from '../components/sections/artists-section.js';
 import { createContactSection } from '../components/sections/contact-section.js';
 import { createMiniDock } from '../components/player/mini-dock.js';
 import { createMasterModal } from '../components/player/master-modal.js';
-import { createCatalogueModal } from '../components/modals/catalogue-modal.js';
-import { createArtistsModal } from '../components/modals/artists-modal.js';
 
 import { audio } from '../services/audio-service.js';
 import { sync } from '../services/realtime-sync.js';
@@ -86,13 +82,7 @@ export class TunoraApp {
 
     // 6. Main Viewport Scroll Snap Container & Sections
     const heroSection = createHeroSection({
-      onExploreRecords: () => router.scrollToSection('records'),
       onOpenPlayer: () => this.openModal('modal-player'),
-      onPlaySpotlight: () => {
-        audio.ensureAudioContext();
-        sync.selectRecord('awarapan-2', 0);
-        this.showToast('Playing Toh Phir Aao from Awarapan 2');
-      },
       onTogglePlay: () => {
         audio.ensureAudioContext();
         sync.togglePlay();
@@ -120,43 +110,6 @@ export class TunoraApp {
       }
     });
 
-    const recordsSection = createRecordsSection({
-      onPlayAlbum: (albumId) => {
-        sync.selectRecord(albumId, 0);
-        this.showToast(`Loaded ${albumId.toUpperCase()} master disc`);
-      },
-      onOpenDiscography: () => this.openModal('modal-records'),
-      onPlayAwarapan: () => {
-        sync.selectRecord('awarapan-2', 0);
-        this.showToast('Playing Toh Phir Aao from Awarapan 2');
-      },
-      onToggleEmbed: () => {
-        const embedContainer = document.getElementById('spotify-embed-container');
-        const toggleBtn = document.getElementById('btn-toggle-spotify-embed');
-        if (embedContainer) {
-          const isHidden = embedContainer.hidden;
-          embedContainer.hidden = !isHidden;
-          if (toggleBtn) toggleBtn.classList.toggle('active', !isHidden);
-          this.showToast(isHidden ? 'Spotify Web Player expanded' : 'Spotify Web Player collapsed');
-        }
-      },
-      onSpotifyLogin: () => {
-        if (spotify.accessToken) {
-          if (window.confirm('Disconnect Spotify account?')) {
-            spotify.logout();
-            this.showToast('Spotify disconnected');
-          }
-        } else {
-          this.showToast('Redirecting to Spotify authorization...');
-          spotify.login();
-        }
-      }
-    });
-
-    const artistsSection = createArtistsSection({
-      onOpenArtists: () => this.openModal('modal-artists')
-    });
-
     const contactSection = createContactSection({
       onSubmit: (email) => {
         if (!email || !email.includes('@')) {
@@ -172,7 +125,7 @@ export class TunoraApp {
     const snapContainer = createElement('main', {
       id: 'snap-container',
       className: 'snap-container',
-      children: [heroSection, recordsSection, artistsSection, contactSection]
+      children: [heroSection, contactSection]
     });
 
     // 7. Mini Player Dock
@@ -297,19 +250,6 @@ export class TunoraApp {
       onLeaveRoom: () => sync.leaveRoom()
     });
 
-    const catalogueModal = createCatalogueModal({
-      onClose: () => this.closeModal('modal-records'),
-      onSelectRecord: (recordId) => {
-        sync.selectRecord(recordId, 0);
-        this.showToast(`Loaded ${recordId.toUpperCase()} master disc`);
-        this.closeModal('modal-records');
-      }
-    });
-
-    const artistsModal = createArtistsModal({
-      onClose: () => this.closeModal('modal-artists')
-    });
-
     // 9. Mobile Bottom Navigation
     const mobileNav = createMobileNav({
       onNavigate: (secId) => router.scrollToSection(secId),
@@ -331,8 +271,6 @@ export class TunoraApp {
       snapContainer,
       miniDock,
       masterModal,
-      catalogueModal,
-      artistsModal,
       mobileNav,
       toast
     );
@@ -357,6 +295,7 @@ export class TunoraApp {
     sync.subscribe((syncState) => this.renderSyncState(syncState));
 
     // 4. Section Observer & Routing
+    router.sectionMap = [...document.querySelectorAll('.screen-section')].map((section) => section.id);
     router.initSectionObserver();
     this.setupNavigationPresentation();
 

@@ -32,49 +32,7 @@ export function createMobileNav(handlers = {}) {
     }
   });
 
-  // 2. Records Item
-  const recordsSvg = createSvg('svg', {
-    attrs: { viewBox: '0 0 24 24', width: '20', height: '20', fill: 'none', stroke: 'currentColor', 'stroke-width': '2' },
-    children: [
-      createSvg('circle', { attrs: { cx: '12', cy: '12', r: '10' } }),
-      createSvg('polygon', { attrs: { points: '10 8 16 12 10 16 10 8' } })
-    ]
-  });
-  const recordsItem = createElement('a', {
-    className: 'mobile-nav-item',
-    dataset: { section: 'records', goto: 'records' },
-    attrs: { href: '#records' },
-    children: [recordsSvg, createElement('span', { text: 'Records' })],
-    events: {
-      click: (e) => {
-        e.preventDefault();
-        if (typeof handlers.onNavigate === 'function') handlers.onNavigate('records', e);
-      }
-    }
-  });
-
-  // 3. Artists Item
-  const artistsSvg = createSvg('svg', {
-    attrs: { viewBox: '0 0 24 24', width: '20', height: '20', fill: 'none', stroke: 'currentColor', 'stroke-width': '2' },
-    children: [
-      createSvgPath('M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'),
-      createSvg('circle', { attrs: { cx: '12', cy: '7', r: '4' } })
-    ]
-  });
-  const artistsItem = createElement('a', {
-    className: 'mobile-nav-item',
-    dataset: { section: 'artists', goto: 'artists' },
-    attrs: { href: '#artists' },
-    children: [artistsSvg, createElement('span', { text: 'Artists' })],
-    events: {
-      click: (e) => {
-        e.preventDefault();
-        if (typeof handlers.onNavigate === 'function') handlers.onNavigate('artists', e);
-      }
-    }
-  });
-
-  // 4. Contact Item
+  // 2. Contact Item
   const contactSvg = createSvg('svg', {
     attrs: { viewBox: '0 0 24 24', width: '20', height: '20', fill: 'none', stroke: 'currentColor', 'stroke-width': '2' },
     children: [
@@ -95,7 +53,7 @@ export function createMobileNav(handlers = {}) {
     }
   });
 
-  // 5. Player Item
+  // 3. Player Item
   const playerSvg = createSvg('svg', {
     attrs: { viewBox: '0 0 24 24', width: '20', height: '20', fill: 'none', stroke: 'currentColor', 'stroke-width': '2' },
     children: [
@@ -119,6 +77,6 @@ export function createMobileNav(handlers = {}) {
   return createElement('nav', {
     className: 'mobile-nav-bar',
     attrs: { 'aria-label': 'Mobile Navigation' },
-    children: [homeItem, recordsItem, artistsItem, contactItem, playerItem]
+    children: [homeItem, contactItem, playerItem]
   });
 }
