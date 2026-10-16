@@ -1,0 +1,37 @@
+{
+  "name": "MELODIA BEAT RECORDS",
+  "short_name": "Melodia",
+  "description": "World Class Recording & Production · Listen Together Audio App",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07060a",
+  "theme_color": "#07060a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./assets/icons/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["music", "entertainment", "audio"],
+  "shortcuts": [
+    {
+      "name": "Featured Records",
+      "url": "./#records",
+      "description": "Listen to the latest releases"
+    },
+    {
+      "name": "Studio Artists",
+      "url": "./#artists",
+      "description": "Explore resident recording artists"
+    },
+    {
+      "name": "Player",
+      "url": "./#player",
+      "description": "Open live playback visualizer"
+    }
+  ]
+}
