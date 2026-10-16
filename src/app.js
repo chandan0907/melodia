@@ -1,4 +1,4 @@
-// Application Orchestrator: UI, Router, 3D Tilt, Modals, Spotify & Listen Together P2P
+// Application Orchestrator: UI, Router, 3D Tilt, Modals, Spotify & Production Real-time Music Room Sync
 import { audio } from './audio.js';
 import { BackgroundAtmosphere, SpectrumVisualizer } from './visualizer.js';
 import { RECORDS, ARTISTS, STUDIO_INFO, PLAYLISTS } from './data.js';
@@ -16,7 +16,7 @@ class MelodiaApp {
   }
 
   init() {
-    // 1. Initialize Visualizers, Audio & P2P Sync
+    // 1. Initialize Visualizers, Audio & Realtime Sync Engine
     this.atmosphere = new BackgroundAtmosphere('bg-canvas');
     this.dockSpectrum = new SpectrumVisualizer('dock-spectrum');
     this.modalSpectrum = new SpectrumVisualizer('modal-spectrum');
@@ -27,7 +27,7 @@ class MelodiaApp {
     audio.subscribe((state) => this.renderPlaybackState(state));
     sync.subscribe((syncState) => this.renderSyncState(syncState));
 
-    // 3. UI Interactions
+    // 3. UI Interactions & Controllers
     this.setupSectionObserver();
     this.setup3DTilt();
     this.setupModals();
@@ -225,43 +225,16 @@ class MelodiaApp {
     const prevBtn = document.getElementById('dock-prev-btn');
     const expandBtn = document.getElementById('dock-expand-btn');
 
-    const handleToggle = () => {
-      if (sync.role === 'guest') {
-        sync.sendGuestCommand('toggle');
-      } else {
-        audio.toggle();
-      }
-    };
-
-    const handleNext = () => {
-      if (sync.role === 'guest') {
-        sync.sendGuestCommand('next');
-      } else {
-        audio.next();
-      }
-    };
-
-    const handlePrev = () => {
-      if (sync.role === 'guest') {
-        sync.sendGuestCommand('prev');
-      } else {
-        audio.prev();
-      }
-    };
-
-    if (playBtn) playBtn.addEventListener('click', handleToggle);
-    if (nextBtn) nextBtn.addEventListener('click', handleNext);
-    if (prevBtn) prevBtn.addEventListener('click', handlePrev);
+    if (playBtn) playBtn.addEventListener('click', () => sync.togglePlay());
+    if (nextBtn) nextBtn.addEventListener('click', () => sync.next());
+    if (prevBtn) prevBtn.addEventListener('click', () => sync.prev());
     if (expandBtn) expandBtn.addEventListener('click', () => this.openModal('modal-player'));
 
     // Album cover clicks directly on the screen
     document.querySelectorAll('[data-play-album]').forEach((el) => {
       el.addEventListener('click', () => {
         const albumId = el.getAttribute('data-play-album');
-        if (sync.role === 'guest') {
-          sync.sendGuestCommand('select-record', { recordId: albumId, trackIdx: 0 });
-        }
-        audio.playRecord(albumId, 0);
+        sync.selectRecord(albumId, 0);
         if (albumId === 'awarapan-2') {
           this.showToast('Playing Toh Phir Aao from Awarapan 2 (Spotify Master)');
         } else {
@@ -331,10 +304,7 @@ class MelodiaApp {
         const plId = btn.getAttribute('data-play-playlist');
         document.querySelectorAll('[data-play-playlist]').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
-        if (sync.role === 'guest') {
-          sync.sendGuestCommand('select-playlist', { playlistId: plId });
-        }
-        audio.playPlaylist(plId);
+        sync.selectPlaylist(plId);
         this.showToast(`Playing playlist: ${btn.textContent.trim()}`);
       });
     });
@@ -409,33 +379,9 @@ class MelodiaApp {
     const mPrevBtn = document.getElementById('modal-prev-btn');
     const mProgress = document.getElementById('modal-progress-bar');
 
-    const handleToggle = () => {
-      if (sync.role === 'guest') {
-        sync.sendGuestCommand('toggle');
-      } else {
-        audio.toggle();
-      }
-    };
-
-    const handleNext = () => {
-      if (sync.role === 'guest') {
-        sync.sendGuestCommand('next');
-      } else {
-        audio.next();
-      }
-    };
-
-    const handlePrev = () => {
-      if (sync.role === 'guest') {
-        sync.sendGuestCommand('prev');
-      } else {
-        audio.prev();
-      }
-    };
-
-    if (mPlayBtn) mPlayBtn.addEventListener('click', handleToggle);
-    if (mNextBtn) mNextBtn.addEventListener('click', handleNext);
-    if (mPrevBtn) mPrevBtn.addEventListener('click', handlePrev);
+    if (mPlayBtn) mPlayBtn.addEventListener('click', () => sync.togglePlay());
+    if (mNextBtn) mNextBtn.addEventListener('click', () => sync.next());
+    if (mPrevBtn) mPrevBtn.addEventListener('click', () => sync.prev());
 
     if (mProgress) {
       mProgress.addEventListener('click', (e) => {
@@ -443,39 +389,50 @@ class MelodiaApp {
         const clickX = e.clientX - rect.left;
         const percent = Math.max(0, Math.min(1, clickX / rect.width));
         const targetSeconds = percent * (audio.currentTrack.durationSeconds || 240);
-        audio.seek(targetSeconds);
-        if (sync.role === 'guest') {
-          sync.sendGuestCommand('seek', { time: targetSeconds });
-        }
+        sync.seek(targetSeconds);
       });
     }
   }
 
-  /* ------------------------------------------------ Listen Together P2P Sync */
+  /* ------------------------------------------------ Synchronized Music Room Hub */
   setupListenTogether() {
     const inviteBanner = document.getElementById('invite-banner');
+    const inviteBannerTitle = document.getElementById('invite-banner-title');
     const joinRoomBtn = document.getElementById('join-room-btn');
     const dismissInviteBtn = document.getElementById('dismiss-invite-btn');
+
     const copyLinkBtn = document.getElementById('copy-room-link-btn');
+    const directCopyBtn = document.getElementById('copy-room-link-direct');
     const leaveRoomBtn = document.getElementById('leave-room-btn');
     const roomLinkWrap = document.getElementById('room-link-wrap');
     const roomLinkInput = document.getElementById('room-link-input');
 
+    const shareWhatsappBtn = document.getElementById('btn-share-whatsapp');
+    const shareTelegramBtn = document.getElementById('btn-share-telegram');
+    const shareNativeBtn = document.getElementById('btn-share-native');
+
+    const joinCodeInput = document.getElementById('join-code-input');
+    const joinCodeSubmit = document.getElementById('btn-join-code-submit');
+
     let pendingInviteRoomId = null;
 
-    // Listen for room detection from URL (#room=...)
+    // 1. URL Room Detection (/room/:id or #room=:id or ?room=:id)
     window.addEventListener('sync:invite', (e) => {
       pendingInviteRoomId = e.detail?.roomId;
       if (inviteBanner && pendingInviteRoomId) {
+        if (inviteBannerTitle) {
+          inviteBannerTitle.textContent = `You've been invited to Room ${pendingInviteRoomId}!`;
+        }
         inviteBanner.hidden = false;
       }
     });
 
-    // Listen for custom toasts from sync or any component
+    // 2. Global Toast Listener
     window.addEventListener('app:toast', (e) => {
       if (e.detail) this.showToast(e.detail);
     });
 
+    // 3. Banner Join Click (acts as required user interaction for browser autoplay permission)
     if (joinRoomBtn) {
       joinRoomBtn.addEventListener('click', async () => {
         if (!pendingInviteRoomId) return;
@@ -488,7 +445,7 @@ class MelodiaApp {
           this.openModal('modal-player');
         } catch (e) {
           console.error(e);
-          this.showToast('Could not join room. Host may be offline.');
+          this.showToast('Could not join room. Check connection.');
         } finally {
           joinRoomBtn.disabled = false;
           joinRoomBtn.textContent = 'Join & Listen';
@@ -502,55 +459,130 @@ class MelodiaApp {
       });
     }
 
+    // 4. Create Room / Invite Friends button
     if (copyLinkBtn) {
       copyLinkBtn.addEventListener('click', async () => {
-        try {
+        if (sync.role === 'solo') {
           copyLinkBtn.disabled = true;
-          copyLinkBtn.textContent = 'Connecting...';
-
-          const inviteLink = await sync.startHosting();
-          if (roomLinkWrap && roomLinkInput) {
-            roomLinkWrap.hidden = false;
-            roomLinkInput.value = inviteLink;
-            roomLinkInput.select();
-          }
-
+          copyLinkBtn.textContent = 'Creating Room...';
           try {
-            await navigator.clipboard.writeText(inviteLink);
-            this.showToast('🎧 Room link copied! Share with friends to sync music.');
-          } catch (clipErr) {
-            this.showToast('Room link created! Copy from the box below.');
-          }
-
-          copyLinkBtn.textContent = 'Copied Link! ✓';
-          setTimeout(() => {
+            audio.ensureAudioContext();
+            const shareUrl = await sync.createRoom();
+            if (roomLinkInput) {
+              roomLinkInput.value = shareUrl;
+            }
+            try {
+              await navigator.clipboard.writeText(shareUrl);
+              this.showToast(`🎉 Room ${sync.roomId} created! Link copied to clipboard.`);
+            } catch (e) {
+              this.showToast(`🎉 Room ${sync.roomId} created! Share the link below.`);
+            }
+          } catch (err) {
+            console.error(err);
+            this.showToast('Could not create room. Check connection.');
+          } finally {
             copyLinkBtn.disabled = false;
-            copyLinkBtn.textContent = 'Invite Friends';
-          }, 2400);
-        } catch (err) {
-          console.error(err);
-          copyLinkBtn.disabled = false;
-          copyLinkBtn.textContent = 'Invite Friends';
-          this.showToast('Could not start room. Check connection.');
+          }
+        } else {
+          // Already in room: copy share link
+          const shareUrl = sync.getShareUrl();
+          if (shareUrl) {
+            try {
+              await navigator.clipboard.writeText(shareUrl);
+              this.showToast('🎧 Room link copied to clipboard!');
+            } catch (e) {
+              this.showToast(`Room link: ${shareUrl}`);
+            }
+          }
         }
       });
     }
 
-    if (leaveRoomBtn) {
-      leaveRoomBtn.addEventListener('click', () => {
-        sync.leaveRoom();
-        if (roomLinkWrap) roomLinkWrap.hidden = true;
-        if (roomLinkInput) roomLinkInput.value = '';
+    // 5. Direct Copy Button inside input group
+    if (directCopyBtn && roomLinkInput) {
+      directCopyBtn.addEventListener('click', async () => {
+        const val = roomLinkInput.value || sync.getShareUrl();
+        if (val) {
+          try {
+            await navigator.clipboard.writeText(val);
+            directCopyBtn.textContent = 'Copied!';
+            this.showToast('🎧 Room link copied to clipboard!');
+            setTimeout(() => { directCopyBtn.textContent = 'Copy'; }, 2000);
+          } catch (e) {
+            roomLinkInput.select();
+            this.showToast('Press Ctrl+C to copy room link.');
+          }
+        }
       });
     }
 
-    if (roomLinkInput) {
-      roomLinkInput.addEventListener('click', () => {
-        roomLinkInput.select();
-        try {
-          navigator.clipboard.writeText(roomLinkInput.value);
-          this.showToast('Copied room link!');
-        } catch (e) {}
+    // 6. Direct WhatsApp Share
+    if (shareWhatsappBtn) {
+      shareWhatsappBtn.addEventListener('click', () => {
+        const text = sync.getShareText();
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+      });
+    }
+
+    // 7. Direct Telegram Share
+    if (shareTelegramBtn) {
+      shareTelegramBtn.addEventListener('click', () => {
+        const url = sync.getShareUrl();
+        const text = `🎧 Join my Melodia synchronized music room!`;
+        window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
+      });
+    }
+
+    // 8. Native Device Share
+    if (shareNativeBtn) {
+      shareNativeBtn.addEventListener('click', async () => {
+        const url = sync.getShareUrl();
+        const text = sync.getShareText();
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: 'Melodia Studio Session',
+              text: text,
+              url: url
+            });
+          } catch (e) {}
+        } else {
+          try {
+            await navigator.clipboard.writeText(url);
+            this.showToast('Room link copied!');
+          } catch (e) {}
+        }
+      });
+    }
+
+    // 9. Join by Room Code
+    const handleJoinCode = async () => {
+      if (!joinCodeInput) return;
+      const code = joinCodeInput.value.trim().toUpperCase();
+      if (!code) {
+        this.showToast('Please enter a room code (e.g. MEL-4K9X)');
+        return;
+      }
+      try {
+        audio.ensureAudioContext();
+        await sync.joinRoom(code);
+        joinCodeInput.value = '';
+      } catch (e) {
+        this.showToast('Could not join room.');
+      }
+    };
+
+    if (joinCodeSubmit) joinCodeSubmit.addEventListener('click', handleJoinCode);
+    if (joinCodeInput) {
+      joinCodeInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleJoinCode();
+      });
+    }
+
+    // 10. Leave Room
+    if (leaveRoomBtn) {
+      leaveRoomBtn.addEventListener('click', () => {
+        sync.leaveRoom();
       });
     }
   }
@@ -559,45 +591,59 @@ class MelodiaApp {
     const dot = document.getElementById('room-status-dot');
     const title = document.getElementById('room-status-title');
     const desc = document.getElementById('room-status-desc');
+    const badgePill = document.getElementById('room-badge-pill');
     const leaveBtn = document.getElementById('leave-room-btn');
+    const copyLinkBtn = document.getElementById('copy-room-link-btn');
     const roomLinkWrap = document.getElementById('room-link-wrap');
     const roomLinkInput = document.getElementById('room-link-input');
+    const joinCodeWrap = document.getElementById('join-code-wrap');
 
-    const isActive = syncState.role !== 'solo';
-    if (dot) dot.classList.toggle('active', isActive);
+    const inRoom = syncState.role === 'room';
+    if (dot) dot.classList.toggle('active', inRoom);
+
+    if (badgePill) {
+      if (inRoom && syncState.shortCode) {
+        badgePill.hidden = false;
+        badgePill.textContent = syncState.shortCode;
+      } else {
+        badgePill.hidden = true;
+      }
+    }
 
     if (title) {
-      if (syncState.role === 'host') {
-        title.textContent = `🎧 Host · ${syncState.listenersCount} listening together`;
-      } else if (syncState.role === 'guest') {
-        title.textContent = '🎧 Connected · Synced with Host';
+      if (inRoom) {
+        title.textContent = `Live Room: ${syncState.roomId} · ${syncState.listenersCount} listening`;
       } else {
-        title.textContent = 'Listen Together with Friends';
+        title.textContent = 'Synchronized Music Room';
       }
     }
 
     if (desc) {
-      if (syncState.role === 'host') {
-        desc.textContent = 'Room is live! Share your invite link. Any track or playback change is synced in real time.';
-      } else if (syncState.role === 'guest') {
-        desc.textContent = 'Synced with host! Enjoy the music together in real time.';
+      if (inRoom) {
+        desc.textContent = 'All members share real-time control. Play, pause, seek, and track switches are synchronized globally.';
       } else {
-        desc.textContent = 'Invite friends to sync and hear the exact same music in real time.';
+        desc.textContent = 'Create or join a synchronized music room to listen in lockstep with friends worldwide.';
       }
+    }
+
+    if (copyLinkBtn) {
+      copyLinkBtn.textContent = inRoom ? 'Invite Friends' : 'Create Room';
     }
 
     if (leaveBtn) {
-      leaveBtn.hidden = (syncState.role === 'solo');
+      leaveBtn.hidden = !inRoom;
     }
 
-    if (roomLinkWrap && roomLinkInput) {
-      if (syncState.role === 'host' && syncState.inviteLink) {
-        roomLinkWrap.hidden = false;
-        roomLinkInput.value = syncState.inviteLink;
-      } else if (syncState.role === 'solo') {
-        roomLinkWrap.hidden = true;
-        roomLinkInput.value = '';
-      }
+    if (roomLinkWrap) {
+      roomLinkWrap.hidden = !inRoom;
+    }
+
+    if (roomLinkInput && inRoom) {
+      roomLinkInput.value = syncState.shareUrl || '';
+    }
+
+    if (joinCodeWrap) {
+      joinCodeWrap.hidden = inRoom;
     }
   }
 
@@ -633,10 +679,7 @@ class MelodiaApp {
     container.querySelectorAll('[data-play-record]').forEach((card) => {
       card.addEventListener('click', () => {
         const id = card.getAttribute('data-play-record');
-        if (sync.role === 'guest') {
-          sync.sendGuestCommand('select-record', { recordId: id, trackIdx: 0 });
-        }
-        audio.playRecord(id, 0);
+        sync.selectRecord(id, 0);
         this.showToast(`Loaded ${id.toUpperCase()} master disc`);
         const backdrop = card.closest('.glass-modal-backdrop');
         if (backdrop) backdrop.classList.remove('active');
@@ -743,11 +786,7 @@ class MelodiaApp {
       // Space to toggle play/pause (when not typing in form)
       if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
         e.preventDefault();
-        if (sync.role === 'guest') {
-          sync.sendGuestCommand('toggle');
-        } else {
-          audio.toggle();
-        }
+        sync.togglePlay();
       }
       // Escape to close modals
       if (e.code === 'Escape') {
