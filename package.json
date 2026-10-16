@@ -1,8 +1,8 @@
 {
-  "name": "melodia-beat-records",
+  "name": "tunora-audio-studio",
   "version": "2.0.0",
   "private": true,
-  "description": "World Class Recording & Production · Futuristic Glassmorphic Audio Web & Mobile App",
+  "description": "Tunora Luxury Audio Studio · Futuristic Glassmorphic Audio Web & Mobile App",
   "type": "module",
   "scripts": {
     "dev": "vite",

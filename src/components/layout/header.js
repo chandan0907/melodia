@@ -23,12 +23,12 @@ export function createHeader(handlers = {}) {
 
   const brandTitle = createElement('span', {
     className: 'brand-title',
-    text: 'BEAT'
+    text: 'TUNORA'
   });
 
   const brandSub = createElement('span', {
     className: 'brand-sub',
-    text: 'RECORDS'
+    text: 'STUDIO'
   });
 
   const brandText = createElement('div', {
@@ -36,8 +36,10 @@ export function createHeader(handlers = {}) {
     children: [brandTitle, brandSub]
   });
 
-  const brandLogo = createElement('div', {
+  const brandLogo = createElement('button', {
     className: 'brand-logo',
+    props: { type: 'button' },
+    attrs: { 'aria-label': 'TUNORA home' },
     dataset: { goto: 'hero' },
     children: [logoIcon, brandText],
     events: {
@@ -148,7 +150,7 @@ export function createHeader(handlers = {}) {
       title: 'Studio Player & Listen Together',
       'aria-label': 'Open Studio Player'
     },
-    children: [playerSvg],
+    children: [playerSvg, createElement('span', { text: 'Player' })],
     events: {
       click: (e) => {
         if (typeof handlers.onOpenPlayer === 'function') handlers.onOpenPlayer(e);

@@ -1,73 +1,69 @@
-/* ==========================================================================
-   DESIGN TOKENS & SYSTEM VARIABLES
-   RESPONSIBILITY: Color palette, typography tokens, glassmorphism layers,
-   easing curves, and spacing metrics across the entire application.
-   THEME: Pullman Green & Icky Green Holographic Glassmorphic Studio.
-   ========================================================================== */
-
+/* TUNORA · shared surface, type, spacing, and interaction tokens. */
 :root {
-  /* ---------------- Surface & Background Dark Layers (Pullman Green Matrix) */
-  --bg-deep: #0f130a;
-  --bg-surface: #151a0e;
-  --bg-card: rgba(26, 34, 16, 0.58);
-  --bg-card-hover: rgba(35, 46, 22, 0.72);
-  --bg-elevated: rgba(43, 56, 26, 0.85);
+  /* Canonical palette. All presentation layers use these roles. */
+  --color-background: #040403;
+  --color-background-secondary: #0B0C09;
+  --color-surface: #12140E;
+  --color-glass: rgba(29, 32, 20, 0.60);
+  --color-olive: #4A5327;
+  --color-sage: #A1A864;
+  --color-leaf: #CED393;
+  --color-text: #F4F5EC;
+  --color-text-secondary: #A7AD9B;
+  --color-border: rgba(206, 211, 147, 0.18);
 
-  /* ---------------- Pullman Green & Icky Green Accent Spectrum */
-  --color-pullman-deep: #1d2411;
-  --color-pullman-base: #2e3b1a;
-  --color-pullman-light: #445625;
-  --color-murky-moss: #5f742c;
-  --color-icky-base: #8c9e3b;
-  --color-icky-bright: #a8bf3f;
-  --color-icky-acid: #bcd643;
-  --color-icky-glow: #cff04d;
-  --color-icky-light: #f1fccb;
+  --bg-deep: var(--color-background);
+  --bg-surface: var(--color-background-secondary);
+  --bg-card: var(--color-surface);
+  --bg-card-hover: rgba(74, 83, 39, 0.24);
+  --bg-elevated: var(--color-surface);
+  --glass-bg: var(--color-glass);
+  --glass-bg-hover: rgba(74, 83, 39, 0.30);
+  --glass-border: var(--color-border);
+  --glass-border-hover: rgba(206, 211, 147, 0.36);
+  --glass-border-active: var(--color-sage);
+  --glass-highlight: inset 0 1px 0 rgba(244, 245, 236, 0.065);
+  --glass-blur: blur(24px) saturate(110%);
+  --glass-card-shadow: 0 24px 64px rgba(0, 0, 0, 0.48), var(--glass-highlight);
 
-  /* ---------------- Luminous Icky Green Glow Layers */
-  --accent-glow: rgba(140, 158, 59, 0.42);
-  --accent-icky-glow: rgba(168, 191, 63, 0.55);
-  --accent-acid-glow: rgba(188, 214, 67, 0.7);
-  --accent-pullman-glow: rgba(46, 59, 26, 0.5);
+  --text-main: var(--color-text);
+  --text-sub: var(--color-text-secondary);
+  --text-mute: var(--color-text-secondary);
+  --text-faint: var(--color-text-secondary);
+  --font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: var(--font-body);
 
-  /* ---------------- Clean Frosted Glassmorphism System */
-  --glass-bg: rgba(255, 255, 255, 0.035);
-  --glass-bg-hover: rgba(168, 191, 63, 0.08);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-border-hover: rgba(168, 191, 63, 0.4);
-  --glass-border-active: rgba(188, 214, 67, 0.65);
-  --glass-highlight: inset 0 1px 1px rgba(255, 255, 255, 0.18), inset 0 0 20px rgba(168, 191, 63, 0.04);
-  --glass-blur: blur(28px) saturate(185%);
-
-  /* ---------------- Typography & Foreground Hierarchy */
-  --text-main: #f5fae8;
-  --text-sub: #dbe8be;
-  --text-mute: #99a87d;
-  --text-faint: rgba(245, 250, 232, 0.35);
-
-  /* ---------------- Typography Scales */
-  --font-display: 'Syne', 'Sora', sans-serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
-
-  /* ---------------- Layout Metrics & Border Radii */
-  --nav-height: 84px;
-  --radius-small: 10px;
-  --radius-medium: 18px;
+  --nav-height: 92px;
+  --radius-small: 12px;
+  --radius-medium: 20px;
   --radius-large: 28px;
   --radius-pill: 9999px;
-
-  /* ---------------- Kinetic Animation & Physics */
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.12, 0.64, 1);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* ---------------- Compatibility & High-End Glass Tokens */
-  --accent-lime: var(--color-icky-acid);
-  --accent-neon: var(--color-icky-acid);
-  --accent-electric: var(--color-icky-glow);
-  --accent-chartreuse: var(--color-icky-bright);
+  /* Compatibility aliases keep existing components on the same palette. */
+  --color-pullman-deep: var(--color-background-secondary);
+  --color-pullman-base: var(--color-surface);
+  --color-pullman-light: var(--color-olive);
+  --color-murky-moss: var(--color-olive);
+  --color-icky-base: var(--color-sage);
+  --color-icky-bright: var(--color-sage);
+  --color-icky-acid: var(--color-leaf);
+  --color-icky-glow: var(--color-leaf);
+  --color-icky-light: var(--color-text);
+  --accent-glow: rgba(74, 83, 39, 0.22);
+  --accent-icky-glow: rgba(161, 168, 100, 0.16);
+  --accent-acid-glow: rgba(206, 211, 147, 0.16);
+  --accent-pullman-glow: rgba(74, 83, 39, 0.20);
+  --accent-lime: var(--color-leaf);
+  --accent-sage: var(--color-sage);
+  --accent-leaf: var(--color-leaf);
+  --accent-olive: var(--color-olive);
+  --accent-neon: var(--color-leaf);
+  --accent-electric: var(--color-leaf);
+  --accent-chartreuse: var(--color-sage);
   --accent-neon-glow: var(--accent-acid-glow);
-  --accent-electric-glow: rgba(207, 240, 77, 0.7);
-  --accent-peach: var(--color-icky-light);
-  --glass-card-shadow: 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 30px rgba(188, 214, 67, 0.08);
+  --accent-electric-glow: var(--accent-acid-glow);
+  --accent-peach: var(--color-text);
 }

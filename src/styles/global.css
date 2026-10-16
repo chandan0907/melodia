@@ -1,10 +1,4 @@
-/* ==========================================================================
-   GLOBAL BASE STYLES & RESET
-   RESPONSIBILITY: Box sizing, typography resets, background canvas layers,
-   custom icky green scrollbars, and fluid micro-animation foundations.
-   THEME: Pullman Green & Icky Green Holographic Studio.
-   ========================================================================== */
-
+/* Shared type, accessible interactions, and a quiet olive atmosphere. */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -14,93 +8,87 @@
 
 html {
   color-scheme: dark;
-  background-color: var(--bg-deep);
+  background: var(--bg-deep);
   font-family: var(--font-body);
   color: var(--text-main);
+  font-size: 16px;
   scroll-behavior: smooth;
-  height: 100%;
-  overflow-x: hidden;
+  scroll-padding-top: 116px;
+  min-height: 100%;
+  overflow-x: clip;
 }
 
 body {
+  min-width: 280px;
   min-height: 100vh;
-  background: radial-gradient(circle at 50% 12%, #1b2310 0%, #0f130a 65%, #070904 100%);
+  background: radial-gradient(ellipse at 50% 12%, rgba(74, 83, 39, 0.15), transparent 52%), var(--bg-deep);
   line-height: 1.6;
-  overflow-x: hidden;
+  overflow-x: clip;
   position: relative;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Stylized Pullman & Icky Green Scrollbars */
-::-webkit-scrollbar {
-  width: 8px;
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
 }
 
-::-webkit-scrollbar-track {
-  background: rgba(15, 19, 10, 0.9);
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, var(--color-pullman-light), var(--color-icky-bright));
-  border-radius: 999px;
-  border: 2px solid var(--bg-deep);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, var(--color-icky-bright), var(--color-icky-acid));
-  box-shadow: 0 0 12px var(--color-icky-bright);
-}
-
+button, input, textarea, select { font: inherit; }
 button {
-  font-family: inherit;
   color: inherit;
-  border: none;
+  border: 0;
   background: none;
   cursor: pointer;
-  outline: none;
 }
+input, textarea, select { color: inherit; }
+body.has-open-modal { overflow: hidden; }
+a { color: inherit; text-decoration: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.btn-pill-primary, .btn-pill-glass { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 11px 21px; border-radius: 99px; font-size: 13px; font-weight: 500; transition: background 160ms, border-color 160ms; }
+.btn-pill-primary { background: var(--color-leaf); color: var(--bg-deep); border: 1px solid var(--color-leaf); }
+.btn-pill-primary:hover { background: var(--color-text); }
+.btn-pill-glass { background: var(--glass-bg); color: var(--text-main); border: 1px solid var(--glass-border); }
+.btn-pill-glass:hover { background: var(--glass-bg-hover); border-color: var(--glass-border-hover); }
+img, svg { flex-shrink: 0; }
+img { max-width: 100%; }
+button:disabled { cursor: not-allowed; opacity: 0.55; }
+button, a, input, textarea, select { touch-action: manipulation; }
 
-button:focus-visible,
-a:focus-visible,
-input:focus-visible {
-  outline: 2px solid var(--color-icky-acid);
-  outline-offset: 3px;
-  box-shadow: 0 0 16px var(--accent-icky-glow);
+:where(button, a, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-leaf) !important;
+  outline-offset: 4px;
+  box-shadow: 0 0 0 6px rgba(4, 4, 3, 0.78);
 }
+::selection { color: var(--bg-deep); background: var(--color-leaf); }
 
-input, textarea {
-  font-family: inherit;
-  color: inherit;
-  outline: none;
-}
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: var(--color-olive); border-radius: 20px; border: 2px solid var(--bg-deep); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-sage); }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-/* ------------------------------------------------ Background Canvas & Atmosphere */
 #bg-canvas {
   position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
+  opacity: 0.16;
   z-index: 0;
   pointer-events: none;
 }
-
-/* Analog Film / Tape Texture Grain Overlay */
 .noise-overlay {
   position: fixed;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  opacity: 0.038;
+  opacity: 0.018;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* Hidden YouTube Host (Dimensioned to satisfy browser autoplay policy) */
+/* Preserve the existing dimensioned provider host and audio integration. */
 #yt-host {
   position: fixed;
   bottom: 0;
@@ -112,57 +100,43 @@ a {
   z-index: -10;
 }
 
-/* ------------------------------------------------ Micro-Animations & Glow FX */
+/* Existing animation names remain available with restrained sage colors. */
 @keyframes neonPulse {
-  0%, 100% {
-    box-shadow: 0 0 15px rgba(168, 191, 63, 0.4), 0 0 35px rgba(140, 158, 59, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 28px rgba(188, 214, 67, 0.75), 0 0 60px rgba(140, 158, 59, 0.45);
-  }
+  0%, 100% { box-shadow: 0 0 14px rgba(161, 168, 100, 0.10); }
+  50% { box-shadow: 0 0 22px rgba(161, 168, 100, 0.20); }
 }
-
 @keyframes floatGentle {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
 }
-
 @keyframes shimmerBorder {
-  0% {
-    border-color: rgba(140, 158, 59, 0.25);
-  }
-  50% {
-    border-color: rgba(188, 214, 67, 0.7);
-  }
-  100% {
-    border-color: rgba(140, 158, 59, 0.25);
-  }
+  0%, 100% { border-color: var(--glass-border); }
+  50% { border-color: rgba(206, 211, 147, 0.36); }
 }
-
 @keyframes radarPing {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(188, 214, 67, 0.75);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 12px rgba(188, 214, 67, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(188, 214, 67, 0);
-  }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(161, 168, 100, 0.18); }
+  70% { box-shadow: 0 0 0 8px rgba(161, 168, 100, 0); }
 }
 
+@media (max-width: 700px) {
+  #bg-canvas, .noise-overlay { display: none; }
+}
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  #bg-canvas, .noise-overlay { display: none; }
+}
+
+/* Opaque, readable surfaces when the browser cannot blur backgrounds. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .app-header, .mobile-nav-bar, .glass-modal-card, .glass-card,
+  .playlist-card-caption, .carousel-nav-pill, .mini-player-dock,
+  .sync-panel, .volume-control-panel {
+    background: var(--color-surface) !important;
   }
 }

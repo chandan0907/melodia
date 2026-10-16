@@ -28,11 +28,12 @@ export function createMiniDock(handlers = {}) {
     }
   });
 
-  const dockVinyl = createElement('div', {
+  const dockVinyl = createElement('button', {
     id: 'dock-vinyl',
     className: 'dock-vinyl',
+    props: { type: 'button' },
     dataset: { modalOpen: 'modal-player' },
-    attrs: { title: 'Click to view Studio Player' },
+    attrs: { title: 'Open Music Studio', 'aria-label': 'Open Music Studio' },
     children: [dockCover],
     events: {
       click: () => {
@@ -53,10 +54,11 @@ export function createMiniDock(handlers = {}) {
     text: 'Kai Sterling & Sarah Preston'
   });
 
-  const dockMeta = createElement('div', {
+  const dockMeta = createElement('button', {
     className: 'dock-meta',
+    props: { type: 'button' },
     dataset: { modalOpen: 'modal-player' },
-    attrs: { style: 'cursor: pointer;' },
+    attrs: { title: 'Open Music Studio' },
     children: [dockTitle, dockArtist],
     events: {
       click: () => {

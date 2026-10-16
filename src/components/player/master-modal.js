@@ -16,6 +16,7 @@ export function createMasterModal(handlers = {}) {
   // 1. Close Button
   const closeBtn = createElement('button', {
     className: 'modal-close-btn',
+    props: { type: 'button' },
     dataset: { modalClose: '' },
     attrs: { 'aria-label': 'Close Modal' },
     text: '×',
@@ -31,7 +32,7 @@ export function createMasterModal(handlers = {}) {
     id: 'modal-track-cover',
     attrs: {
       src: './assets/images/album_love.jpg',
-      alt: 'Record Cover'
+      alt: 'Current track artwork'
     }
   });
 
@@ -53,46 +54,55 @@ export function createMasterModal(handlers = {}) {
 
   // 3. Player Details Stage
   const tapeTag = createElement('div', {
-    attrs: {
-      style: 'font-size:0.75rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent-peach); font-weight:700;'
-    },
-    text: 'Master Tape Playback'
+    className: 'player-eyebrow',
+    text: 'Now Playing'
   });
 
   const trackTitle = createElement('h3', {
     id: 'modal-track-title',
-    attrs: { style: 'font-size: 1.85rem; font-weight:800; margin-top:4px;' },
+    className: 'player-track-title',
     text: 'The Ghost Sessions'
   });
 
   const trackArtist = createElement('p', {
     id: 'modal-track-artist',
-    attrs: { style: 'color:var(--text-mute); font-size:1.05rem;' },
+    className: 'player-track-artist',
     text: 'Kai Sterling & Sarah Preston'
   });
 
   const trackAlbum = createElement('p', {
     id: 'modal-track-album',
-    attrs: { style: 'color:rgba(255,255,255,0.45); font-size:0.85rem; margin-top:2px;' },
+    className: 'player-track-album',
     text: 'Album: love (2026 Master)'
   });
 
   // Modal Audio Spectrum Canvas
   const modalSpectrum = createElement('canvas', {
     id: 'modal-spectrum',
-    attrs: { style: 'width: 100%; height: 50px; margin-top: 18px;' }
+    className: 'player-spectrum',
+    attrs: { 'aria-hidden': 'true' }
   });
 
-  // Progress Bar
+  // Progress Bar with Knob Dot
   const progressFill = createElement('div', {
     id: 'modal-progress-fill',
     className: 'player-progress-fill'
   });
 
+  const progressDot = createElement('div', {
+    id: 'modal-scrubber-dot',
+    className: 'player-progress-dot'
+  });
+
   const progressBar = createElement('div', {
     id: 'modal-progress-bar',
     className: 'player-progress-bar',
-    children: [progressFill],
+    attrs: {
+      role: 'slider', tabindex: '0', 'aria-label': 'Seek in current track',
+      'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': '0',
+      'aria-valuetext': '0:00'
+    },
+    children: [progressFill, progressDot],
     events: {
       click: (e) => {
         if (typeof handlers.onSeek === 'function') {
@@ -101,12 +111,27 @@ export function createMasterModal(handlers = {}) {
           const pct = Math.max(0, Math.min(1, clickX / rect.width));
           handlers.onSeek(pct);
         }
+      },
+      keydown: (e) => {
+        const current = parseFloat(progressFill.style.width) / 100 || 0;
+        const seekKeys = {
+          ArrowRight: Math.min(1, current + 0.02),
+          ArrowUp: Math.min(1, current + 0.02),
+          ArrowLeft: Math.max(0, current - 0.02),
+          ArrowDown: Math.max(0, current - 0.02),
+          Home: 0,
+          End: 1
+        };
+        if (Object.hasOwn(seekKeys, e.key)) {
+          e.preventDefault();
+          if (typeof handlers.onSeek === 'function') handlers.onSeek(seekKeys[e.key]);
+        }
       }
     }
   });
 
   const timeCur = createElement('span', { id: 'modal-time-cur', text: '0:00' });
-  const timeDur = createElement('span', { id: 'modal-time-dur', text: '4:15' });
+  const timeDur = createElement('span', { id: 'modal-time-dur', text: '0:00' });
 
   const timeRow = createElement('div', {
     className: 'player-time-row',
@@ -148,7 +173,7 @@ export function createMasterModal(handlers = {}) {
     id: 'modal-play-btn',
     className: 'btn-dock-play',
     props: { type: 'button' },
-    attrs: { style: 'width: 58px; height: 58px;', 'aria-label': 'Play or Pause' },
+    attrs: { 'aria-label': 'Play or Pause' },
     children: [playSvg, pauseSvg],
     events: {
       click: () => {
@@ -175,9 +200,29 @@ export function createMasterModal(handlers = {}) {
     }
   });
 
+  const unavailableControl = (label, path) => createElement('button', {
+    className: 'btn-dock-icon player-unavailable-control',
+    props: { type: 'button', disabled: true },
+    attrs: { 'aria-label': `${label} unavailable`, title: `${label} is not supported by the current player`, 'aria-describedby': 'player-transport-note' },
+    children: [createSvg('svg', {
+      attrs: { viewBox: '0 0 24 24', width: '20', height: '20', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' },
+      children: [createSvgPath(path)]
+    })]
+  });
+
   const actionRow = createElement('div', {
     className: 'player-action-row',
-    children: [prevBtn, playBtn, nextBtn]
+    children: [
+      unavailableControl('Shuffle', 'M3 6h3c4 0 8 12 12 12h3m-4-4 4 4-4 4M3 18h3c1.4 0 2.9-1.5 4.4-3.5M14 9.5C15.4 7.5 16.8 6 18 6h3m-4-4 4 4-4 4'),
+      prevBtn, playBtn, nextBtn,
+      unavailableControl('Repeat', 'm16 3 4 4-4 4M4 11V9a2 2 0 0 1 2-2h14M8 21l-4-4 4-4m12 0v2a2 2 0 0 1-2 2H4')
+    ]
+  });
+
+  const transportNote = createElement('p', {
+    id: 'player-transport-note',
+    className: 'player-transport-note',
+    text: 'Shuffle and repeat are unavailable in this player.'
   });
 
   // Individual Device Volume Controls Card
@@ -270,9 +315,7 @@ export function createMasterModal(handlers = {}) {
 
   const playlistsRow = createElement('div', {
     className: 'player-playlists-row',
-    attrs: {
-      style: 'margin-top:20px; display:flex; gap:8px; flex-wrap:wrap; justify-content:center;'
-    },
+    attrs: { 'aria-label': 'Switch playlist' },
     children: playlistButtons
   });
 
@@ -311,7 +354,8 @@ export function createMasterModal(handlers = {}) {
       readOnly: true,
       value: '',
       placeholder: 'Generating room link...'
-    }
+    },
+    attrs: { 'aria-label': 'Room invitation link' }
   });
 
   const copyDirectBtn = createElement('button', {
@@ -339,8 +383,17 @@ export function createMasterModal(handlers = {}) {
     className: 'join-code-field',
     props: {
       type: 'text',
-      placeholder: 'Enter Code (e.g. MEL-8K9X)',
+      placeholder: 'Room code · MEL-8K9X',
       maxLength: 12
+    },
+    attrs: { 'aria-label': 'Room code', autocapitalize: 'characters', autocomplete: 'off', spellcheck: 'false' },
+    events: {
+      keydown: (e) => {
+        if (e.key === 'Enter' && typeof handlers.onJoinCode === 'function') {
+          e.preventDefault();
+          handlers.onJoinCode(joinCodeInput.value);
+        }
+      }
     }
   });
 
@@ -348,7 +401,7 @@ export function createMasterModal(handlers = {}) {
     id: 'btn-join-code-submit',
     className: 'btn-room-code-join',
     props: { type: 'button' },
-    text: 'Join',
+    text: 'Join Room',
     events: {
       click: () => {
         if (typeof handlers.onJoinCode === 'function') {
@@ -418,7 +471,6 @@ export function createMasterModal(handlers = {}) {
     id: 'copy-room-link-btn',
     className: 'btn-pill-primary',
     props: { type: 'button' },
-    attrs: { style: 'padding: 9px 18px; font-size: 0.8rem;' },
     text: 'Invite Friends',
     events: {
       click: () => {
@@ -461,9 +513,9 @@ export function createMasterModal(handlers = {}) {
       progressBar,
       timeRow,
       actionRow,
+      transportNote,
       volCard,
-      playlistsRow,
-      listenTogetherBox
+      playlistsRow
     ]
   });
 
@@ -474,8 +526,8 @@ export function createMasterModal(handlers = {}) {
   });
 
   const modalCard = createElement('div', {
-    className: 'glass-modal-card',
-    children: [closeBtn, playerGrid]
+    className: 'glass-modal-card studio-player-card',
+    children: [closeBtn, playerGrid, listenTogetherBox]
   });
 
   // 6. Modal Backdrop

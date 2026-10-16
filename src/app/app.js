@@ -25,7 +25,7 @@ import { spotify } from '../services/spotify-service.js';
 import { router } from './router.js';
 import { BackgroundAtmosphere, SpectrumVisualizer } from '../utils/visualizer.js';
 
-export class MelodiaApp {
+export class TunoraApp {
   constructor() {
     this.atmosphere = null;
     this.dockSpectrum = null;
@@ -91,6 +91,21 @@ export class MelodiaApp {
         audio.ensureAudioContext();
         sync.selectRecord('awarapan-2', 0);
         this.showToast('Playing Toh Phir Aao from Awarapan 2');
+      },
+      onTogglePlay: () => {
+        audio.ensureAudioContext();
+        sync.togglePlay();
+      },
+      onNext: () => sync.next(),
+      onPrev: () => sync.prev(),
+      onSeek: (pct) => {
+        const dur = audio.currentTrack?.durationSeconds || 240;
+        sync.seek(pct * dur);
+      },
+      onSelectTrack: (albumId, trackIndex) => {
+        audio.ensureAudioContext();
+        sync.selectRecord(albumId, trackIndex);
+        this.showToast('Playing selected master track...');
       },
       onStartRoom: async () => {
         audio.ensureAudioContext();
@@ -261,7 +276,7 @@ export class MelodiaApp {
       },
       onShareTelegram: () => {
         const url = sync.getShareUrl();
-        const text = '🎧 Join my Melodia synchronized music room!';
+        const text = '🎧 Join my Tunora synchronized music room!';
         window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
       },
       onShareNative: async () => {
@@ -269,7 +284,7 @@ export class MelodiaApp {
         const text = sync.getShareText();
         if (navigator.share) {
           try {
-            await navigator.share({ title: 'Melodia Studio Session', text, url });
+            await navigator.share({ title: 'Tunora Studio Session', text, url });
           } catch (e) {}
         } else {
           try {
@@ -342,6 +357,7 @@ export class MelodiaApp {
 
     // 4. Section Observer & Routing
     router.initSectionObserver();
+    this.setupNavigationPresentation();
 
     // 5. 3D Card Tilt Physics
     this.setup3DTilt();
@@ -380,6 +396,64 @@ export class MelodiaApp {
       dockPauseIco.style.display = isPlaying ? 'block' : 'none';
     }
 
+    // Spotify Hero Music Card Elements
+    const heroTitle = document.getElementById('hero-player-title');
+    const heroArtist = document.getElementById('hero-player-artist');
+    const heroPlayIco = document.getElementById('hero-play-icon');
+    const heroPauseIco = document.getElementById('hero-pause-icon');
+    const heroProgressFill = document.getElementById('hero-progress-fill');
+    const heroScrubberDot = document.getElementById('hero-scrubber-dot');
+    const heroTimeCur = document.getElementById('hero-time-cur');
+    const heroTimeDur = document.getElementById('hero-time-dur');
+
+    if (heroTitle && track.title) {
+      heroTitle.textContent = track.title;
+    }
+    if (heroArtist && track.artist) {
+      heroArtist.textContent = track.artist;
+    }
+    if (heroPlayIco && heroPauseIco) {
+      heroPlayIco.style.display = isPlaying ? 'none' : 'block';
+      heroPauseIco.style.display = isPlaying ? 'block' : 'none';
+    }
+    if (heroProgressFill) {
+      heroProgressFill.style.width = `${progress}%`;
+    }
+    if (heroScrubberDot) {
+      heroScrubberDot.style.left = `${progress}%`;
+    }
+    if (heroTimeCur) {
+      heroTimeCur.textContent = audio.formatTime(track.currentTimeSeconds);
+    }
+    if (heroTimeDur) {
+      heroTimeDur.textContent = track.duration || '03:38';
+    }
+    const heroCover = document.getElementById('hero-track-cover');
+    const heroAlbum = document.getElementById('hero-track-album');
+    if (heroCover) { heroCover.src = track.cover; heroCover.alt = `${track.album || track.title} artwork`; }
+    if (heroAlbum) heroAlbum.textContent = track.album || '';
+    ['hero-progress-bar', 'modal-progress-bar'].forEach((id) => {
+      const slider = document.getElementById(id);
+      if (slider) {
+        slider.setAttribute('aria-valuenow', String(Math.round(progress || 0)));
+        slider.setAttribute('aria-valuetext', `${audio.formatTime(track.currentTimeSeconds)} of ${track.duration || '0:00'}`);
+      }
+    });
+    ['hero-play-pause-btn', 'modal-play-btn', 'dock-play-btn'].forEach((id) => {
+      const button = document.getElementById(id);
+      if (button) button.setAttribute('aria-label', isPlaying ? 'Pause' : 'Play');
+    });
+
+    // Highlight active track in the Spotify queue
+    const queueRows = document.querySelectorAll('.spotify-queue-row');
+    queueRows.forEach((r) => {
+      const isCurrent = r.dataset.playQueueAlbum === track.recordId &&
+                        r.dataset.playQueueIndex === String(track.trackIdx);
+      r.classList.toggle('active', isCurrent);
+      if (isCurrent) r.setAttribute('aria-current', 'true');
+      else r.removeAttribute('aria-current');
+    });
+
     // Modal Player Elements
     const modalTitle = document.getElementById('modal-track-title');
     const modalArtist = document.getElementById('modal-track-artist');
@@ -389,6 +463,7 @@ export class MelodiaApp {
     const modalPlayIco = document.getElementById('modal-play-icon');
     const modalPauseIco = document.getElementById('modal-pause-icon');
     const modalProgressFill = document.getElementById('modal-progress-fill');
+    const modalProgressDot = document.getElementById('modal-scrubber-dot');
     const modalTimeCur = document.getElementById('modal-time-cur');
     const modalTimeDur = document.getElementById('modal-time-dur');
 
@@ -404,6 +479,7 @@ export class MelodiaApp {
     }
 
     if (modalProgressFill) modalProgressFill.style.width = `${progress}%`;
+    if (modalProgressDot) modalProgressDot.style.left = `${progress}%`;
     if (modalTimeCur) modalTimeCur.textContent = audio.formatTime(track.currentTimeSeconds);
     if (modalTimeDur) modalTimeDur.textContent = track.duration || '3:45';
 
@@ -421,7 +497,11 @@ export class MelodiaApp {
     const modalVolIconHigh = document.getElementById('modal-vol-icon-high');
     const modalVolIconMuted = document.getElementById('modal-vol-icon-muted');
 
-    const sliderGradient = (pct) => `linear-gradient(90deg, #2e3b1a 0%, #8c9e3b ${pct * 0.7}%, #bcd643 ${pct}%, rgba(255, 255, 255, 0.12) ${pct}%, rgba(255, 255, 255, 0.12) 100%)`;
+    const sliderGradient = (pct) => `linear-gradient(90deg, var(--color-sage) 0%, var(--color-leaf) ${pct}%, var(--glass-border) ${pct}%, var(--glass-border) 100%)`;
+    ['dock-volume-btn', 'modal-volume-mute-btn'].forEach((id) => {
+      const button = document.getElementById(id);
+      if (button) button.setAttribute('aria-label', isMuted ? 'Unmute personal volume' : 'Mute personal volume');
+    });
 
     if (dockVolSlider && document.activeElement !== dockVolSlider) {
       dockVolSlider.value = volPct;
@@ -517,6 +597,7 @@ export class MelodiaApp {
     const tiltCards = document.querySelectorAll('.tilt-card');
     tiltCards.forEach((card) => {
       card.addEventListener('mousemove', (e) => {
+        if (window.matchMedia('(prefers-reduced-motion: reduce), (pointer: coarse)').matches) return;
         const rect = card.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
@@ -579,7 +660,11 @@ export class MelodiaApp {
   openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
+      this.modalReturnFocus = document.activeElement;
       modal.classList.add('active');
+      document.body.classList.add('has-open-modal');
+      document.querySelectorAll('#app > :not(.glass-modal-backdrop):not(.app-toast)').forEach((el) => { el.inert = true; });
+      modal.querySelector('button, input, [tabindex="0"]')?.focus({ preventScroll: true });
       if (modalId === 'modal-player' && this.modalSpectrum) {
         this.modalSpectrum.resize();
       }
@@ -590,7 +675,39 @@ export class MelodiaApp {
   // INPUT: modalId (string).
   closeModal(modalId) {
     const modal = document.getElementById(modalId);
-    if (modal) modal.classList.remove('active');
+    if (modal) {
+      modal.classList.remove('active');
+      document.body.classList.remove('has-open-modal');
+      document.querySelectorAll('#app > [inert]').forEach((el) => { el.inert = false; });
+      this.modalReturnFocus?.focus({ preventScroll: true });
+    }
+  }
+
+  // Presentation only: reflect the section visible in the viewport without changing routing.
+  setupNavigationPresentation() {
+    const sections = [...document.querySelectorAll('.screen-section')];
+    let scheduled = false;
+    const reflectVisibleSection = () => {
+      const readingLine = Math.min(window.innerHeight * 0.3, 240);
+      const current = sections.find((section) => {
+        const rect = section.getBoundingClientRect();
+        return rect.top <= readingLine && rect.bottom > readingLine;
+      }) || sections[0];
+      document.querySelectorAll('.nav-item, .mobile-nav-item[data-section]').forEach((item) => {
+        const active = item.dataset.section === current?.id;
+        item.classList.toggle('active', active);
+        const link = item.matches('a') ? item : item.querySelector('a');
+        if (link) {
+          if (active) link.setAttribute('aria-current', 'page');
+          else link.removeAttribute('aria-current');
+        }
+      });
+      scheduled = false;
+    };
+    window.addEventListener('scroll', () => {
+      if (!scheduled) { scheduled = true; requestAnimationFrame(reflectVisibleSection); }
+    }, { passive: true });
+    requestAnimationFrame(reflectVisibleSection);
   }
 
   // PURPOSE: Displays a non-intrusive notification toast.
@@ -634,7 +751,7 @@ export class MelodiaApp {
       this.deferredPrompt.prompt();
       this.deferredPrompt.userChoice.then((choice) => {
         if (choice.outcome === 'accepted') {
-          this.showToast('Melodia Beat Records App Installed!');
+          this.showToast('Tunora Studio App Installed!');
         }
         this.deferredPrompt = null;
       });
@@ -646,15 +763,25 @@ export class MelodiaApp {
   // PURPOSE: Binds global keyboard shortcuts (Space for toggle, Escape for modals).
   setupKeyboardControls() {
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      if (e.code === 'Space' && !e.target.closest('button, a, input, textarea, select, [role="slider"], [contenteditable="true"]')) {
         e.preventDefault();
         sync.togglePlay();
       }
       if (e.code === 'Escape') {
-        document.querySelectorAll('.glass-modal-backdrop.active').forEach((m) => m.classList.remove('active'));
+        document.querySelectorAll('.glass-modal-backdrop.active').forEach((m) => this.closeModal(m.id));
+      }
+      if (e.key === 'Tab') {
+        const modal = document.querySelector('.glass-modal-backdrop.active');
+        if (!modal) return;
+        const focusable = [...modal.querySelectorAll('button:not(:disabled), a[href], input, select, textarea, [tabindex="0"]')].filter((el) => el.getClientRects().length && !el.closest('[hidden]'));
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
       }
     });
   }
 }
 
-export const app = new MelodiaApp();
+export const MelodiaApp = TunoraApp;
+export const app = new TunoraApp();

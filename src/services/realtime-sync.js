@@ -30,7 +30,7 @@ class RealtimeRoomSync {
     this.clientId = 'user_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36).slice(-4);
     this.username = this.loadOrCreateUsername();
     this.roomId = null;
-    this.roomName = 'Melodia Studio Room';
+    this.roomName = 'Tunora Studio Room';
     this.role = 'solo'; // 'solo' | 'room'
     this.connected = false;
     this.connecting = false;
@@ -61,11 +61,11 @@ class RealtimeRoomSync {
   // OUTPUT: Username string.
   loadOrCreateUsername() {
     try {
-      const saved = localStorage.getItem('mel_username');
+      const saved = localStorage.getItem('tun_username');
       if (saved) return saved;
-      const names = ['Listener', 'Audiophile', 'Melodia Guest', 'Studio Producer', 'Soundwave'];
+      const names = ['Listener', 'Audiophile', 'Tunora Guest', 'Studio Producer', 'Soundwave'];
       const randomName = `${names[Math.floor(Math.random() * names.length)]} #${Math.floor(100 + Math.random() * 900)}`;
-      localStorage.setItem('mel_username', randomName);
+      localStorage.setItem('tun_username', randomName);
       return randomName;
     } catch (e) {
       return 'Listener #404';
@@ -150,12 +150,12 @@ class RealtimeRoomSync {
   // OUTPUT: Share text string.
   getShareText() {
     const trackTitle = this.state?.track?.title || audio.currentTrack.title || 'Studio Records';
-    return `🎧 Join my Melodia Beat Records room! Let's listen to "${trackTitle}" together in real time: ${this.getShareUrl()}`;
+    return `🎧 Join my Tunora room! Let's listen to "${trackTitle}" together in real time: ${this.getShareUrl()}`;
   }
 
   /* ------------------------------------------------ Room Lifecycle */
 
-  // PURPOSE: Generates a short, memorable, URL-safe 4-character room code (e.g. MEL-8K9X).
+  // PURPOSE: Generates a short, memorable, URL-safe 4-character room code (e.g. TUN-8K9X).
   // OUTPUT: Formatted room ID string.
   generateRoomId() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -163,13 +163,13 @@ class RealtimeRoomSync {
     for (let i = 0; i < 4; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    return `MEL-${code}`;
+    return `TUN-${code}`;
   }
 
   // PURPOSE: Creates a new synchronized music room and initiates connection.
   // INPUT: customName (optional room display name).
   // OUTPUT: Promise resolving to the shareable room URL.
-  async createRoom(customName = 'Melodia Studio Room') {
+  async createRoom(customName = 'Tunora Studio Room') {
     const newRoomId = this.generateRoomId();
     this.roomName = customName;
     return await this.joinRoom(newRoomId, true);
@@ -243,9 +243,9 @@ class RealtimeRoomSync {
       }
 
       const brokerUrl = BROKER_URLS[this.activeBrokerIndex % BROKER_URLS.length];
-      const presenceTopic = `melodia/v1/rooms/${roomId}/presence/${this.clientId}`;
-      const stateTopic = `melodia/v1/rooms/${roomId}/state`;
-      const eventsTopic = `melodia/v1/rooms/${roomId}/events`;
+      const presenceTopic = `tunora/v1/rooms/${roomId}/presence/${this.clientId}`;
+      const stateTopic = `tunora/v1/rooms/${roomId}/state`;
+      const eventsTopic = `tunora/v1/rooms/${roomId}/events`;
 
       const options = {
         clientId: `${this.clientId}_${Math.random().toString(16).substring(2, 6)}`,
@@ -271,7 +271,7 @@ class RealtimeRoomSync {
         this.notify();
 
         // Subscribe to state, transient events, and peer presences
-        client.subscribe([stateTopic, eventsTopic, `melodia/v1/rooms/${roomId}/presence/+`], { qos: 1 }, (err) => {
+        client.subscribe([stateTopic, eventsTopic, `tunora/v1/rooms/${roomId}/presence/+`], { qos: 1 }, (err) => {
           if (err) console.warn('MQTT subscribe notice:', err);
 
           // Announce own presence immediately
@@ -362,7 +362,7 @@ class RealtimeRoomSync {
   // PURPOSE: Publishes heartbeat presence packet to the broker.
   publishPresence() {
     if (!this.roomId || !this.mqttClient || !this.connected) return;
-    const topic = `melodia/v1/rooms/${this.roomId}/presence/${this.clientId}`;
+    const topic = `tunora/v1/rooms/${this.roomId}/presence/${this.clientId}`;
     const payload = JSON.stringify({
       clientId: this.clientId,
       username: this.username,
@@ -418,7 +418,7 @@ class RealtimeRoomSync {
     if (!this.roomId || !this.mqttClient || !this.connected) return;
 
     this.state = newState;
-    const stateTopic = `melodia/v1/rooms/${this.roomId}/state`;
+    const stateTopic = `tunora/v1/rooms/${this.roomId}/state`;
     const payloadStr = JSON.stringify(newState);
 
     try {
@@ -765,7 +765,7 @@ class RealtimeRoomSync {
   leaveRoom(updateUrl = true) {
     if (this.mqttClient) {
       try {
-        const topic = `melodia/v1/rooms/${this.roomId}/presence/${this.clientId}`;
+        const topic = `tunora/v1/rooms/${this.roomId}/presence/${this.clientId}`;
         this.mqttClient.publish(topic, JSON.stringify({ clientId: this.clientId, offline: true }), { qos: 1, retain: true });
         this.mqttClient.end(true);
       } catch (e) {}

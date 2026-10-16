@@ -1,266 +1,181 @@
-/* ==========================================================================
-   LAYOUT, NAVIGATION & SHELL STYLES (REDESIGNED)
-   RESPONSIBILITY: Floating glass header, modern continuous page layout,
-   mobile bottom navigation, and zero-clutter clean shell.
-   THEME: Pullman Green & Icky Green Holographic Glassmorphic Studio.
-   ========================================================================== */
-
-/* ------------------------------------------------ Top Floating Glass Header */
+/* Shared navigation and natural page flow. */
 .app-header {
   position: fixed;
-  top: 16px;
+  top: 24px;
   left: 50%;
   transform: translateX(-50%);
-  width: min(1200px, calc(100% - 32px));
-  height: 64px;
-  border-radius: var(--radius-pill);
+  width: min(1120px, calc(100% - 48px));
+  min-height: 68px;
+  border-radius: 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  gap: 24px;
+  padding: 10px 18px 10px 22px;
   z-index: 100;
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  background: rgba(15, 19, 10, 0.82);
-  border: 1px solid rgba(188, 214, 67, 0.18);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  transition: all 0.4s var(--ease-smooth);
+  background: rgba(18, 20, 14, 0.82);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 12px 38px rgba(0, 0, 0, 0.32), var(--glass-highlight);
 }
-
 .brand-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  user-select: none;
-  transition: transform 0.3s var(--ease-spring);
+  gap: 10px;
+  text-align: left;
+  min-height: 44px;
+  flex-shrink: 0;
+  border-radius: 10px;
 }
-
-.brand-logo:hover {
-  transform: translateY(-1px);
-}
-
 .logo-icon {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #8c9e3b, #445625 55%, #1d2411);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 18px var(--accent-neon-glow);
-  position: relative;
-  transition: transform 0.45s var(--ease-spring), box-shadow 0.45s;
+  background: radial-gradient(circle at 36% 30%, var(--color-sage), var(--color-olive) 65%, var(--bg-card));
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--glass-border-hover);
+  box-shadow: inset 0 0 0 6px rgba(4, 4, 3, 0.25);
 }
-
 .logo-icon::after {
   content: '';
-  width: 12px;
-  height: 12px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: #bcd643;
-  box-shadow: 0 0 10px #cff04d;
+  background: var(--color-leaf);
 }
-
-.brand-logo:hover .logo-icon {
-  transform: scale(1.1) rotate(25deg);
-  box-shadow: 0 0 30px var(--accent-electric-glow);
-}
-
-.brand-text {
-  display: flex;
-  flex-direction: column;
-}
-
+.brand-text { display: flex; flex-direction: column; }
 .brand-title {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.1rem;
-  letter-spacing: 0.18em;
-  color: #ffffff;
-  line-height: 1;
-}
-
-.brand-sub {
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.32em;
-  color: var(--color-icky-acid);
-  text-transform: uppercase;
-  margin-top: 3px;
-  text-shadow: 0 0 12px rgba(188, 214, 67, 0.4);
-}
-
-/* ------------------------------------------------ Nav Links */
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  list-style: none;
-}
-
-.nav-item a {
-  font-size: 0.84rem;
+  font-family: var(--font-body);
   font-weight: 500;
-  letter-spacing: 0.08em;
+  font-size: 15px;
+  letter-spacing: 0.10em;
+  color: var(--text-main);
+  line-height: 1.15;
+}
+.brand-sub {
+  font-size: 8px;
+  font-weight: 400;
+  letter-spacing: 0.25em;
   color: var(--text-mute);
-  transition: all 0.25s var(--ease-smooth);
-  position: relative;
-  padding: 6px 14px;
-  border-radius: 999px;
-  display: inline-block;
+  margin-top: 4px;
 }
-
-.nav-item a:hover {
-  color: #ffffff;
-  background: rgba(188, 214, 67, 0.08);
-}
-
-/* Active Navigation Pill State */
-.nav-item.active a {
-  color: #0f130a;
-  background: linear-gradient(135deg, #a8bf3f, #bcd643);
-  font-weight: 700;
-  box-shadow: 0 2px 14px rgba(188, 214, 67, 0.45);
-}
-
-.nav-actions {
+.nav-links { display: flex; align-items: center; gap: 5px; list-style: none; }
+.nav-item a {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-mute);
+  padding: 10px 16px;
+  min-height: 44px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  border-radius: var(--radius-pill);
+  transition: color 160ms ease, background 160ms ease;
 }
-
-.btn-app-install {
+.nav-item a:hover { color: var(--text-main); background: rgba(161, 168, 100, 0.08); }
+.nav-item.active a { color: var(--bg-deep); background: var(--color-leaf); font-weight: 500; }
+.nav-actions { display: flex; align-items: center; gap: 8px; }
+.btn-app-install, .btn-header-sync {
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 16px;
-  border-radius: var(--radius-pill);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-highlight);
-  font-size: 0.76rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--text-main);
-  backdrop-filter: blur(16px);
-  transition: all 0.3s var(--ease-spring);
-}
-
-.btn-app-install:hover {
-  background: var(--glass-bg-hover);
-  border-color: var(--glass-border-hover);
-  color: var(--color-icky-light);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px var(--accent-glow);
-}
-
-.btn-header-sync {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  display: flex;
-  align-items: center;
   justify-content: center;
-  color: var(--color-icky-acid);
-  transition: all 0.3s var(--ease-spring);
+  gap: 7px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+  transition: background 160ms ease, border-color 160ms ease;
 }
+.btn-app-install { background: rgba(244, 245, 236, 0.025); }
+.btn-header-sync { color: var(--color-leaf); background: rgba(74, 83, 39, 0.16); }
+.btn-app-install:hover, .btn-header-sync:hover { background: var(--glass-bg-hover); border-color: var(--glass-border-hover); }
+.rail-left, .rail-right { display: none !important; }
 
-.btn-header-sync:hover {
-  color: #ffffff;
-  border-color: var(--color-icky-acid);
-  background: rgba(188, 214, 67, 0.2);
-  transform: scale(1.1) rotate(15deg);
-  box-shadow: 0 0 20px var(--accent-neon-glow);
-}
-
-/* ------------------------------------------------ Hidden Rails (Uncluttered View) */
-.rail-left,
-.rail-right {
-  display: none !important;
-}
-
-/* ------------------------------------------------ Modern Natural Page Flow Container */
 .snap-container {
   position: relative;
   z-index: 10;
   width: 100%;
   min-height: 100vh;
-  overflow-x: hidden;
-  scroll-behavior: smooth;
   padding-bottom: 120px;
 }
-
 .screen-section {
   position: relative;
   width: 100%;
-  min-height: 85vh;
+  min-height: auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  padding: calc(var(--nav-height) + 30px) 24px 80px;
-  box-sizing: border-box;
+  padding: 76px 24px;
   text-align: center;
-  max-width: 1240px;
+  max-width: 1160px;
   margin: 0 auto;
+  scroll-margin-top: 116px;
 }
 
-/* ------------------------------------------------ Mobile Bottom Navigation Bar */
 .mobile-nav-bar {
   display: none;
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 64px;
-  background: rgba(15, 19, 10, 0.92);
+  bottom: 10px;
+  left: 12px;
+  right: 12px;
+  min-height: 66px;
+  background: rgba(18, 20, 14, 0.94);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border-top: 1px solid var(--glass-border);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
   z-index: 100;
   align-items: center;
   justify-content: space-around;
-  padding: 0 12px;
+  padding: 5px 4px;
+  padding-bottom: max(5px, env(safe-area-inset-bottom));
 }
-
 .mobile-nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 4px;
   color: var(--text-mute);
-  font-size: 0.7rem;
-  font-weight: 500;
-  transition: all 0.2s var(--ease-spring);
-  padding: 6px 12px;
-  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 400;
+  min-width: 44px;
+  min-height: 52px;
+  flex: 1;
+  border-radius: 13px;
 }
+.mobile-nav-item.active { color: var(--color-leaf); background: rgba(161, 168, 100, 0.10); }
+.mobile-nav-item:hover { color: var(--text-main); background: rgba(161, 168, 100, 0.06); }
 
-.mobile-nav-item.active,
-.mobile-nav-item:hover {
-  color: var(--color-icky-acid);
-  transform: translateY(-2px);
-  text-shadow: 0 0 10px rgba(188, 214, 67, 0.5);
+@media (max-width: 1000px) {
+  .app-header { gap: 12px; padding-inline: 16px; }
+  .nav-item a { padding-inline: 12px; }
 }
-
 @media (max-width: 900px) {
-  .app-header {
-    top: 8px;
-    width: calc(100% - 20px);
-    padding: 0 16px;
-  }
-  .nav-links {
-    display: none;
-  }
-  .mobile-nav-bar {
-    display: flex;
-  }
-  .screen-section {
-    padding: calc(var(--nav-height) + 20px) 16px 84px;
-    min-height: auto;
-  }
+  .app-header { top: 12px; width: calc(100% - 32px); min-height: 64px; border-radius: 19px; }
+  .nav-links { display: none; }
+  .mobile-nav-bar { display: flex; }
+  .screen-section { padding: 52px 20px; }
+  .snap-container { padding-bottom: 180px; }
+}
+@media (max-width: 600px) {
+  html { scroll-padding-top: 96px; }
+  .app-header { width: calc(100% - 24px); gap: 8px; padding: 8px 10px 8px 14px; }
+  .brand-title { font-size: 13px; }
+  .brand-logo { gap: 8px; }
+  .logo-icon { width: 28px; height: 28px; }
+  .btn-header-sync { min-width: 44px; padding: 0; }
+  .btn-header-sync span { display: none; }
+  .btn-app-install { padding-inline: 10px; font-size: 11px; }
+  .screen-section { padding-inline: 16px; scroll-margin-top: 96px; }
+}
+@media (max-width: 360px) {
+  .btn-app-install { width: 44px; padding: 0; }
+  .btn-app-install span { display: none; }
 }

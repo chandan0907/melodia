@@ -1,6 +1,6 @@
 {
-  "appId": "com.melodia.beatrecords",
-  "appName": "Melodia Beat Records",
+  "appId": "com.tunora.audiostudio",
+  "appName": "Tunora",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {

@@ -1,12 +1,12 @@
-// Melodia Beat Records — Studio Discography, Artists & Playlists Data
+// Tunora Audio Studio — Studio Discography, Artists & Playlists Data
 
 export const STUDIO_INFO = {
-  name: 'BEAT RECORDS',
-  brand: 'MELODIA',
+  name: 'TUNORA',
+  brand: 'TUNORA',
   tagline: 'World Class Recording & Production',
   subtitle: 'A premier sonic sanctum dedicated to acoustic purity, cutting-edge analog-digital hybrid mastering, and boundary-pushing musical innovation.',
   address: '1074 Pacific Avenue, San Francisco, CA 94133',
-  email: 'beatme@melodiarecords.com',
+  email: 'studio@tunora.com',
   phone: '+1 (415) 890-1212',
   bookingHours: 'Mon - Sun: 24/7 Studio Access for Residents',
   gear: [

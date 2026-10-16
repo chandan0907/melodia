@@ -1,5 +1,5 @@
-// Service Worker for Melodia Beat Records PWA
-const CACHE_NAME = 'melodia-v1.0.0';
+// Service Worker for Tunora Audio Studio PWA
+const CACHE_NAME = 'tunora-v1.0.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

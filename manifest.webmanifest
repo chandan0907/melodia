@@ -1,7 +1,7 @@
 {
-  "name": "MELODIA BEAT RECORDS",
-  "short_name": "Melodia",
-  "description": "World Class Recording & Production · Listen Together Audio App",
+  "name": "TUNORA AUDIO STUDIO",
+  "short_name": "Tunora",
+  "description": "Tunora Luxury Audio Studio · Synchronized Music Listening Rooms",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

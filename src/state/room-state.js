@@ -9,7 +9,7 @@ class RoomStateManager {
     this.currentState = {
       role: 'solo', // 'solo' | 'room'
       roomId: null,
-      roomName: 'Melodia Studio Room',
+      roomName: 'Tunora Studio Room',
       connected: false,
       connecting: false,
       listenersCount: 1,

@@ -268,7 +268,7 @@ class AudioEngine {
 
     this.currentTrack = {
       title: pl.name,
-      artist: 'Melodia Studio Session',
+      artist: 'Tunora Studio Session',
       album: pl.name,
       cover: pl.id.includes('awarapan') ? './assets/images/album_awarapan.jpg' : './assets/images/album_love.jpg',
       duration: '4:30',
@@ -557,7 +557,7 @@ class AudioEngine {
       navigator.mediaSession.metadata = new window.MediaMetadata({
         title: this.currentTrack.title || 'Studio Playback',
         artist: this.currentTrack.artist || 'Beat Records',
-        album: this.currentTrack.album || 'Melodia',
+        album: this.currentTrack.album || 'Tunora',
         artwork: [
           { src: this.currentTrack.cover || './assets/images/album_love.jpg', sizes: '512x512', type: 'image/jpeg' }
         ]

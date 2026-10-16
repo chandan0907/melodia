@@ -106,6 +106,7 @@ export function createMobileNav(handlers = {}) {
   const playerItem = createElement('button', {
     className: 'mobile-nav-item',
     props: { type: 'button' },
+    attrs: { 'aria-label': 'Open Studio Player' },
     dataset: { modalOpen: 'modal-player' },
     children: [playerSvg, createElement('span', { text: 'Player' })],
     events: {

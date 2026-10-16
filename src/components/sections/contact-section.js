@@ -99,7 +99,7 @@ export function createContactSection(handlers = {}) {
     className: 'studio-info-grid',
     children: [
       createInfoItem('Studio Address', '1074 Pacific Avenue, San Francisco, CA 94133'),
-      createInfoItem('Engineering Desk', 'beatme@melodiarecords.com'),
+      createInfoItem('Engineering Desk', 'studio@tunora.com'),
       createInfoItem('Direct Line', '+1 (415) 890-1212'),
       createInfoItem('Acoustic Suite', 'Dolby Atmos 9.1.4 Certified')
     ]

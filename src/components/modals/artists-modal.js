@@ -86,7 +86,7 @@ export function createArtistsModal(handlers = {}) {
 
   const headerDesc = createElement('p', {
     className: 'modal-header-desc',
-    text: 'Meet the sonic pioneers crafting music at Beat Records & Melodia Studio.'
+    text: 'Meet the sonic pioneers crafting music at Tunora Audio Studio.'
   });
 
   const artistCards = ARTISTS.map((artist) =>

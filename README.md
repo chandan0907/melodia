@@ -1,11 +1,11 @@
-# 🎧 MELODIA BEAT RECORDS — Luxury Studio Audio & Real-Time Synchronized Music Rooms
+# 🎧 TUNORA — Luxury Studio Audio & Real-Time Synchronized Music Rooms
 
-[![Vercel Deployment](https://img.shields.io/badge/Live%20App-melodia--phi--lac.vercel.app-1ed760?style=for-the-badge&logo=vercel)](https://melodia-phi-lac.vercel.app/)
+[![Vercel Deployment](https://img.shields.io/badge/Live%20App-tunora.vercel.app-1ed760?style=for-the-badge&logo=vercel)](https://melodia-phi-lac.vercel.app/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-Programmatic%20DOM%20%2B%20Vite-f7df1e?style=for-the-badge&logo=javascript&logoColor=000)](https://vitejs.dev/)
 [![Realtime Sync](https://img.shields.io/badge/Realtime-MQTT%20WSS%20%2B%20WebRTC-e11d48?style=for-the-badge)](https://melodia-phi-lac.vercel.app/)
 [![PWA Ready](https://img.shields.io/badge/PWA-Installable%20%2B%20Capacitor-3b82f6?style=for-the-badge&logo=pwa)](https://capacitorjs.com/)
 
-A world-class, futuristic recording studio web application and installable mobile app featuring deep crimson glassmorphism, 3D interactive vinyl cover flow, dual Web Audio / YouTube playback engines, and **production-grade real-time synchronized music rooms ("Listen Together")** allowing users anywhere worldwide to listen to music simultaneously in lockstep.
+A world-class, futuristic recording studio web application and installable mobile app featuring Pullman Green & Icky Green glassmorphism, authentic Spotify frosted glass music poster player card, dual Web Audio / YouTube playback engines, and **production-grade real-time synchronized music rooms ("Listen Together")** allowing users anywhere worldwide to listen to music simultaneously in lockstep.
 
 **🌐 Live Production App:** [https://melodia-phi-lac.vercel.app/](https://melodia-phi-lac.vercel.app/)
 
@@ -218,4 +218,4 @@ The project is pre-configured for instant zero-configuration deployment to Verce
 
 ---
 
-**© 2026 Melodia Beat Records · World Class Recording & Production**
+**© 2026 Tunora Audio Studio · World Class Recording & Production**

@@ -135,7 +135,7 @@ function createSpotifySpotlightBar(handlers = {}) {
     className: 'btn-spotlight-play',
     props: { type: 'button' },
     dataset: { playAlbum: 'awarapan-2' },
-    children: [playSvg, createElement('span', { text: 'Play in Melodia' })],
+    children: [playSvg, createElement('span', { text: 'Play in Tunora' })],
     events: {
       click: () => {
         if (typeof handlers.onPlayAwarapan === 'function') handlers.onPlayAwarapan();

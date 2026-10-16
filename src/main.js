@@ -1,7 +1,7 @@
 // PURPOSE: Application bootstrap entry point.
-// INTEGRATION: Loaded by index.html as the primary JavaScript module; initializes MelodiaApp.
+// INTEGRATION: Loaded by index.html as the primary JavaScript module; initializes TunoraApp.
 // INPUT: DOM lifecycle events.
-// OUTPUT: Instantiated and mounted Melodia application.
+// OUTPUT: Instantiated and mounted Tunora application.
 
 import './styles/main.css';
 import { app } from './app/app.js';

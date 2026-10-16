@@ -1,271 +1,46 @@
-/* ==========================================================================
-   SYNCHRONIZED MUSIC ROOM & LISTEN TOGETHER STYLES
-   RESPONSIBILITY: Top invitation banner, room status badge, presence indicators,
-   room code inputs, and shareable link containers.
-   ========================================================================== */
-
-/* ------------------------------------------------ Top Invite Banner */
-.invite-banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 150;
-  background: linear-gradient(90deg, #2e3b1a, #445625 50%, #8c9e3b);
-  color: #ffffff;
-  padding: 10px 24px;
-  box-shadow: 0 4px 20px rgba(46, 59, 26, 0.6);
-  animation: slideDown 0.4s var(--ease-spring);
+/* Shared room presentation; room state, permissions and callbacks are unchanged. */
+.invite-banner { position: fixed; top: 0; left: 0; right: 0; z-index: 150; background: var(--accent-leaf); color: var(--bg-deep); padding: 12px 24px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3); }
+.invite-banner-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.invite-banner-content { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.invite-pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--bg-deep); flex-shrink: 0; }
+.invite-text { display: flex; flex-direction: column; font-size: 0.84rem; line-height: 1.5; }
+.invite-text strong { font-size: 0.9rem; font-weight: 600; }
+.invite-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.btn-invite-dismiss { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--bg-deep); font-size: 1.35rem; transition: background 0.2s; }
+.btn-invite-dismiss:hover { background: rgba(4, 4, 3, 0.09); }
+.listen-together-box { margin-top: 34px; padding: 24px; border-radius: 22px; background: var(--glass-bg); border: 1px solid var(--glass-border); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.listen-together-info { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: min(100%, 260px); }
+.room-status-badge { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+.room-status-badge strong { font-weight: 500; font-size: 0.94rem; letter-spacing: -0.02em; }
+.status-dot { width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: var(--text-mute); }
+.status-dot.active { background: var(--accent-leaf); box-shadow: 0 0 0 4px rgba(206, 211, 147, 0.08); }
+.room-badge-pill { padding: 3px 9px; border-radius: 8px; background: rgba(161, 168, 100, 0.12); border: 1px solid var(--glass-border); color: var(--accent-leaf); font-size: 0.74rem; font-weight: 500; letter-spacing: 0.04em; }
+#room-status-desc { font-size: 0.82rem; color: var(--text-mute); line-height: 1.6; }
+.room-link-container, .join-code-wrap { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.room-link-field, .join-code-field { flex: 1; min-width: 0; min-height: 44px; padding: 10px 13px; border-radius: 12px; background: var(--bg-surface); border: 1px solid var(--glass-border); font-size: 0.82rem; color: var(--text-main); }
+.join-code-field { text-transform: uppercase; }
+.join-code-field::placeholder { text-transform: none; color: var(--text-mute); }
+.room-link-field::placeholder { color: var(--text-mute); }
+.btn-room-copy, .btn-room-code-join, .btn-share-social, .btn-room-leave { min-height: 44px; padding: 10px 14px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--glass-border); color: var(--text-main); font-size: 0.79rem; font-weight: 500; white-space: nowrap; transition: background 0.2s, border-color 0.2s; }
+.btn-room-code-join { background: var(--accent-leaf); color: var(--bg-deep); border-color: var(--accent-leaf); }
+.btn-room-copy:hover, .btn-share-social:hover, .btn-room-leave:hover { background: rgba(161, 168, 100, 0.14); border-color: var(--accent-sage); }
+.btn-room-code-join:hover { background: var(--text-main); }
+.room-social-share-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
+.room-actions-group { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
+.room-actions-group .btn-pill-primary { min-height: 44px; padding: 10px 17px; font-size: 0.8rem; }
+.room-actions-group button:disabled { opacity: 0.55; cursor: wait; }
+.listen-together-box [hidden] { display: none !important; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .listen-together-box { background: var(--bg-card); } }
+@media (max-width: 640px) {
+  .listen-together-box { margin-top: 24px; padding: 18px 15px; gap: 16px; border-radius: 18px; }
+  .listen-together-info { min-width: 0; width: 100%; flex-basis: 100%; }
+  .room-actions-group { width: 100%; }
+  .room-actions-group > button { flex: 1; }
+  .invite-banner { padding: 10px 12px; }
+  .invite-banner-inner { gap: 8px; align-items: flex-start; }
+  .invite-text { font-size: 0.75rem; }
+  .invite-text strong { font-size: 0.8rem; }
+  .invite-actions { gap: 4px; }
+  .invite-actions .btn-pill-primary { min-height: 44px; padding: 8px 10px; font-size: 0.75rem; }
 }
 
-.invite-banner-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.invite-banner-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.invite-pulse {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 0 10px #ffffff;
-  animation: pulseGlow 1.4s ease-in-out infinite;
-}
-
-@keyframes pulseGlow {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.4); opacity: 0.6; }
-}
-
-.invite-text {
-  display: flex;
-  flex-direction: column;
-  font-size: 0.84rem;
-}
-
-.invite-text strong {
-  font-size: 0.92rem;
-  letter-spacing: 0.02em;
-}
-
-.invite-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.btn-invite-dismiss {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-invite-dismiss:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-}
-
-@keyframes slideDown {
-  from { transform: translateY(-100%); }
-  to { transform: translateY(0); }
-}
-
-/* ------------------------------------------------ Listen Together Box */
-.listen-together-box {
-  margin-top: 24px;
-  padding: 18px 20px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--glass-border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.listen-together-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-  min-width: 240px;
-}
-
-.room-status-badge {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #6b7280;
-  transition: background 0.3s;
-}
-
-.status-dot.active {
-  background: #bcd643;
-  box-shadow: 0 0 10px #bcd643;
-}
-
-.room-badge-pill {
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: rgba(188, 214, 67, 0.18);
-  border: 1px solid #bcd643;
-  color: #f1fccb;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-}
-
-#room-status-desc {
-  font-size: 0.82rem;
-  color: var(--text-mute);
-  line-height: 1.4;
-}
-
-/* Room Link Copy Field */
-.room-link-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.room-link-field {
-  flex: 1;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.btn-room-copy {
-  padding: 7px 16px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid var(--glass-border);
-  color: #ffffff;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-room-copy:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* Join Code Input */
-.join-code-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.join-code-field {
-  flex: 1;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--glass-border);
-  font-size: 0.75rem;
-  color: #ffffff;
-  text-transform: uppercase;
-}
-
-.join-code-field::placeholder {
-  text-transform: none;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.btn-room-code-join {
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--glass-border);
-  color: #ffffff;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s;
-}
-
-.btn-room-code-join:hover {
-  background: rgba(255, 255, 255, 0.16);
-}
-
-/* Social Share Row */
-.room-social-share-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.btn-share-social {
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--glass-border);
-  color: #ffffff;
-  font-size: 0.72rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-share-social:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-/* Room Action Buttons */
-.room-actions-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.btn-room-leave {
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--glass-border);
-  color: #e2e8f0;
-  font-size: 0.76rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-room-leave:hover {
-  background: rgba(220, 38, 38, 0.25);
-  border-color: rgba(239, 68, 68, 0.6);
-  color: #ffffff;
-}
